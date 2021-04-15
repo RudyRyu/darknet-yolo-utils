@@ -136,7 +136,7 @@ def random_augmentation(image, panel_ltrb, digits,
 
     seq = iaa.Sequential([
         # random transform
-        iaa.SomeOf((0, if_(random_geometry, 4, 0)),[
+        iaa.SomeOf((1, if_(random_geometry, 4, 0)),[
             iaa.PiecewiseAffine(scale=(0, 0.02)),
             iaa.PerspectiveTransform(scale=(0.00, 0.08), fit_output=True),
             iaa.ElasticTransformation(alpha=(0, 1.0), sigma=0.1),
@@ -144,7 +144,7 @@ def random_augmentation(image, panel_ltrb, digits,
         ], random_order=True),
 
         # random color
-        iaa.SomeOf((0, if_(random_color, 5, 0)),[
+        iaa.SomeOf((1, if_(random_color, 5, 0)),[
             iaa.ContrastNormalization((0.7, 1.3), per_channel=0.5),
             iaa.Dropout(p=(0, 0.01), per_channel=0.5),
             iaa.Add((-40, 40), per_channel=0.5),
