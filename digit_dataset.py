@@ -206,7 +206,7 @@ class_label_id_map = {
 
 def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                                 random_color=False,
-                                transform_num_per_image=5, valid_ratio=0.2):
+                                transform_num_per_panel=5, valid_ratio=0.2):
     with open(vott_json) as vott_buffer:
         vott = json.loads(vott_buffer.read())
 
@@ -286,7 +286,7 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                         augment.random_augmentation(
                             image.copy(),
                             panel_ltrb, digits,
-                            batch=transform_num_per_image,
+                            batch=transform_num_per_panel,
                             random_geometry=True,
                             random_color=random_color)
 
@@ -352,7 +352,7 @@ if __name__ == '__main__':
         vott_json='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export/digits-export.json',
         image_dir='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export',
         output_dir='./digit_data',
-        transform_num_per_image=2, 
+        transform_num_per_panel=100, 
         random_color=False,
         valid_ratio=0.2
     )
