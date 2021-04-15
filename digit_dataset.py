@@ -330,20 +330,20 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                 
                     f_out.close()
             
-        random.shuffle(total_list)
+    random.shuffle(total_list)
 
-        valid_num = int(len(total_list)*valid_ratio)
-        
-        valid_list = total_list[:valid_num]
-        train_list = total_list[valid_num:]
+    valid_num = int(len(total_list)*valid_ratio)
+    
+    valid_list = total_list[:valid_num]
+    train_list = total_list[valid_num:]
 
-        with open(os.path.join(output_dir, 'train.txt'), 'w') as f:
-            for line in train_list:
-                f.write(line+'\n')
+    with open(os.path.join(output_dir, 'train.txt'), 'w') as f:
+        for line in train_list:
+            f.write(line+'\n')
 
-        with open(os.path.join(output_dir, 'valid.txt'), 'w') as f:
-            for line in valid_list:
-                f.write(line+'\n')
+    with open(os.path.join(output_dir, 'valid.txt'), 'w') as f:
+        for line in valid_list:
+            f.write(line+'\n')
 
 
 if __name__ == '__main__':
