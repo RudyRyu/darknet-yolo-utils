@@ -289,17 +289,17 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                             random_geometry=True,
                             random_color=True)
 
-                for b, (image, panel, digits) in enumerate(zip(b_images, 
-                                                               b_panel,
-                                                               b_digits)):
+                for b, (aug_image, panel, digits) in enumerate(zip(b_images, 
+                                                                   b_panel,
+                                                                   b_digits)):
 
                     if t==0:
                         file_name = f'{image_name}_p{p}'
                     else:
                         file_name = f'{image_name}_p{p}_a{b}'
 
-                    panel_image = image[int(panel[1]):int(panel[3]),
-                                        int(panel[0]):int(panel[2])]
+                    panel_image = aug_image[int(panel[1]):int(panel[3]),
+                                            int(panel[0]):int(panel[2])]
 
                     f_out = open(
                         os.path.join(data_output_dir, file_name)+'.txt', 'w+')
