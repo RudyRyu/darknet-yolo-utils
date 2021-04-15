@@ -166,7 +166,6 @@ def random_augmentation(image, panel_ltrb, digits,
                                   sigma_color=(10, 250), 
                                   sigma_space=(10, 250))
             ]),
-
         ], random_order=True)
     ])
 
@@ -175,8 +174,7 @@ def random_augmentation(image, panel_ltrb, digits,
 
     batch_panel_ltrb = []
     batch_digits = []
-    for i, (aug_image, aug_boxes) in enumerate(zip(batch_aug_images, 
-                                                   batch_aug_boxes)):
+    for aug_image, aug_boxes in zip(batch_aug_images, batch_aug_boxes):
 
         batch_panel_ltrb.append((aug_boxes[0].x1, aug_boxes[0].y1, 
                                  aug_boxes[0].x2, aug_boxes[0].y2))
