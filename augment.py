@@ -122,7 +122,7 @@ def random_augmentation(image, panel_ltrb, digits,
     batch_images = np.empty([batch, *image.shape], dtype=np.uint8)
     batch_boxes = []
     for i in range(batch):
-        batch_images[i] = deepcopy(image)
+        batch_images[i] = image.copy()
         batch_boxes.append(boxes)
     
     if_ = lambda tf, t, f: t if tf else f

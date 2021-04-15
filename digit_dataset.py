@@ -277,13 +277,14 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                 # not augmentation
                 if t == 0:
                     # b means batch
-                    b_images = np.expand_dims(deepcopy(image), axis=0)
+                    b_images = np.expand_dims(image, axis=0)
                     b_panel, b_digits = [panel_ltrb], [digits]
 
                 # augmentation
                 else:
                     b_images, b_panel, b_digits = \
-                        augment.random_augmentation(deepcopy(image),
+                        augment.random_augmentation(
+                            image.copy(),
                             panel_ltrb, digits,
                             batch=transform_num_per_image,
                             random_geometry=True,
