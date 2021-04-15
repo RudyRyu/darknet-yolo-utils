@@ -96,10 +96,6 @@ def example(imgs, pieceWiseAffine, rotate):
     return aug_imgs
 
 
-def random_color(image):
-    aug_image = image
-    return aug_image
-
 def random_augmentation(image, panel_ltrb, digits, 
                         batch=100,
                         random_geometry=True,
