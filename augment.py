@@ -183,15 +183,15 @@ def random_augmentation(image, panel_ltrb, digits,
 
         batch_digits.append(digits)
 
-        image_before = boxes.draw_on_image(
-            image, size=2, color=[0, 0, 255])
+        # image_before = boxes.draw_on_image(
+        #     image, size=2, color=[0, 0, 255])
 
-        image_after = aug_boxes.draw_on_image(
-            aug_image, size=2)
+        # image_after = aug_boxes.draw_on_image(
+        #     aug_image, size=2)
 
-        cv2.imshow('before', image_before)
-        cv2.imshow('after', image_after)
-        cv2.waitKey()
+        # cv2.imshow('before', image_before)
+        # cv2.imshow('after', image_after)
+        # cv2.waitKey()
 
     return batch_aug_images, batch_panel_ltrb, batch_digits
 
