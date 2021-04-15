@@ -215,7 +215,7 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
         os.makedirs(data_output_dir)
 
     total_list = []
-    for v in list(vott['assets'].values())[::-1][:3]:
+    for v in list(vott['assets'].values())[::-1]:
         image_path = os.path.join(image_dir, v['asset']['name'])
         print(image_path)
         image_name = os.path.splitext(v['asset']['name'])[0]
