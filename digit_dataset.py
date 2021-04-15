@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from collections import defaultdict
+from copy import deepcopy
 from pprint import pprint
 from random import shuffle
 
@@ -33,26 +34,26 @@ class_label_id_map = {
     'panel' : 16,
 }
 
-g_image_feature_map = {
-    'image/height': tf.io.FixedLenFeature([], tf.int64),
-    'image/width': tf.io.FixedLenFeature([], tf.int64),
+# g_image_feature_map = {
+#     'image/height': tf.io.FixedLenFeature([], tf.int64),
+#     'image/width': tf.io.FixedLenFeature([], tf.int64),
     
-    # 'image/key/sha256': tf.io.FixedLenFeature([], tf.string),
-    'image/encoded': tf.io.FixedLenFeature([], tf.string),
-    # 'image/format': tf.io.FixedLenFeature([], tf.string),
+#     # 'image/key/sha256': tf.io.FixedLenFeature([], tf.string),
+#     'image/encoded': tf.io.FixedLenFeature([], tf.string),
+#     # 'image/format': tf.io.FixedLenFeature([], tf.string),
     
-    'image/panel/bbox/xmin': tf.io.FixedLenFeature([], tf.float32),
-    'image/panel/bbox/ymin': tf.io.FixedLenFeature([], tf.float32),
-    'image/panel/bbox/xmax': tf.io.FixedLenFeature([], tf.float32),
-    'image/panel/bbox/ymax': tf.io.FixedLenFeature([], tf.float32),
+#     'image/panel/bbox/xmin': tf.io.FixedLenFeature([], tf.float32),
+#     'image/panel/bbox/ymin': tf.io.FixedLenFeature([], tf.float32),
+#     'image/panel/bbox/xmax': tf.io.FixedLenFeature([], tf.float32),
+#     'image/panel/bbox/ymax': tf.io.FixedLenFeature([], tf.float32),
     
-    'image/object/bbox/xmins': tf.io.VarLenFeature(tf.float32),
-    'image/object/bbox/xmaxs': tf.io.VarLenFeature(tf.float32),
-    'image/object/bbox/ymins': tf.io.VarLenFeature(tf.float32),
-    'image/object/bbox/ymaxs': tf.io.VarLenFeature(tf.float32),
-    'image/object/class/texts': tf.io.VarLenFeature(tf.string),
-    'image/object/class/ids': tf.io.VarLenFeature(tf.int64),
-}
+#     'image/object/bbox/xmins': tf.io.VarLenFeature(tf.float32),
+#     'image/object/bbox/xmaxs': tf.io.VarLenFeature(tf.float32),
+#     'image/object/bbox/ymins': tf.io.VarLenFeature(tf.float32),
+#     'image/object/bbox/ymaxs': tf.io.VarLenFeature(tf.float32),
+#     'image/object/class/texts': tf.io.VarLenFeature(tf.string),
+#     'image/object/class/ids': tf.io.VarLenFeature(tf.int64),
+# }
 
 
 # def build_tf_train_example(image_path, 
@@ -205,7 +206,7 @@ g_image_feature_map = {
 
 def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                                 random_color=False,
-                                transform_num_per_image=0, valid_ratio=0.2):
+                                transform_num_per_image=5, valid_ratio=0.2):
     with open(vott_json) as vott_buffer:
         vott = json.loads(vott_buffer.read())
 
@@ -214,8 +215,9 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
         os.makedirs(data_output_dir)
 
     total_list = []
-    for i, v in enumerate(list(vott['assets'].values())[::-1]):
+    for v in list(vott['assets'].values())[::-1]:
         image_path = os.path.join(image_dir, v['asset']['name'])
+        print(image_path)
         image_name = os.path.splitext(v['asset']['name'])[0]
         image = cv2.imread(image_path)
 
@@ -244,6 +246,11 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                 if region['tags'][0] == 'panel':
                     continue
                 
+                class_id = class_label_id_map[region['tags'][0]]
+
+                if class_id in [10, 11, 14]:
+                    continue
+
                 h = float(region['boundingBox']['height'])
                 w = float(region['boundingBox']['width'])
                 l = float(region['boundingBox']['left'])
@@ -257,8 +264,6 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                         r <= panel_ltrb[2],
                         b <= panel_ltrb[3]]):
 
-                    class_id = class_label_id_map[region['tags'][0]]
-
                     digit_dict = {}
                     digit_dict['class_id'] = class_id
                     digit_dict['l'] = l
@@ -268,49 +273,61 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                     
                     digits.append(digit_dict)
 
-            # transform + color?
-            for t in range(transform_num_per_image+1):
-                file_name = f'{image_name}_p{p}_t{t}'
-
+            for t in range(2):
+                # not augmentation
                 if t == 0:
-                    n_image = image.copy()
-                    n_panel_ltrb, n_digits = panel_ltrb, digits
+                    # b means batch
+                    b_images = np.expand_dims(deepcopy(image), axis=0)
+                    b_panel, b_digits = [panel_ltrb], [digits]
 
+                # augmentation
                 else:
-                    n_image, n_panel_ltrb, n_digits = \
-                        augment.random_transform(image.copy(), 
-                                                 panel_ltrb, digits)
+                    b_images, b_panel, b_digits = \
+                        augment.random_augmentation(deepcopy(image),
+                            panel_ltrb, digits,
+                            batch=transform_num_per_image,
+                            random_geometry=True,
+                            random_color=True)
 
-                    if random_color:
-                        n_image = augment.random_color(n_image)
+                for b, (image, panel, digits) in enumerate(zip(b_images, 
+                                                               b_panel,
+                                                               b_digits)):
 
-                panel_image = n_image[n_panel_ltrb[1]:n_panel_ltrb[3],
-                                      n_panel_ltrb[0]:n_panel_ltrb[2]]
+                    if t==0:
+                        file_name = f'{image_name}_p{p}'
+                    else:
+                        file_name = f'{image_name}_p{p}_a{b}'
 
-                f_out = open(
-                    os.path.join(data_output_dir, file_name)+'.txt', 'w+')
+                    panel_image = image[int(panel[1]):int(panel[3]),
+                                        int(panel[0]):int(panel[2])]
 
-                total_list.append(os.path.join('data/', f'{file_name}.jpg'))
-                cv2.imwrite(os.path.join(data_output_dir, f'{file_name}.jpg'), 
-                            panel_image)
+                    f_out = open(
+                        os.path.join(data_output_dir, file_name)+'.txt', 'w+')
 
-                for d in n_digits:
-                    l,t,r,b = d['l'], d['t'], d['r'], d['b']
-                    
-                    class_id = d['class_id']
-                    xmin = (l-panel_ltrb[0]) / (panel_ltrb[2]-panel_ltrb[0])
-                    ymin = (t-panel_ltrb[1]) / (panel_ltrb[3]-panel_ltrb[1])
-                    xmax = (r-panel_ltrb[0]) / (panel_ltrb[2]-panel_ltrb[0])
-                    ymax = (b-panel_ltrb[1]) / (panel_ltrb[3]-panel_ltrb[1])
-                        
-                    c_x = (xmin+xmax)/2
-                    c_y = (ymin+ymax)/2
-                    w = xmax-xmin
-                    h = ymax-ymin
+                    total_list.append(
+                        os.path.join('data/', f'{file_name}.jpg'))
 
-                    f_out.write(f'{class_id} {c_x} {c_y} {w} {h}\n')
-            
-                f_out.close()
+                    cv2.imwrite(
+                        os.path.join(data_output_dir, f'{file_name}.jpg'), 
+                        panel_image)
+
+                    for d in digits:
+                        class_id = d['class_id']
+                        l,t,r,b = d['l'], d['t'], d['r'], d['b']
+
+                        xmin = (l-panel[0]) / (panel[2]-panel[0])
+                        ymin = (t-panel[1]) / (panel[3]-panel[1])
+                        xmax = (r-panel[0]) / (panel[2]-panel[0])
+                        ymax = (b-panel[1]) / (panel[3]-panel[1])
+                            
+                        c_x = (xmin+xmax)/2
+                        c_y = (ymin+ymax)/2
+                        w = xmax-xmin
+                        h = ymax-ymin
+
+                        f_out.write(f'{class_id} {c_x} {c_y} {w} {h}\n')
+                
+                    f_out.close()
             
         random.shuffle(total_list)
 
@@ -326,14 +343,17 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
         with open(os.path.join(output_dir, 'valid.txt'), 'w') as f:
             for line in valid_list:
                 f.write(line+'\n')
-                
+
 
 if __name__ == '__main__':
 
     generate_yolo_org_from_vott(
         vott_json='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export/digits-export.json',
         image_dir='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export',
-        output_dir='./digit_data_test'
+        output_dir='./digit_data',
+        transform_num_per_image=2, 
+        random_color=False,
+        valid_ratio=0.2
     )
 
 
