@@ -1,0 +1,339 @@
+import random
+import hashlib
+import json
+import os
+from collections import defaultdict
+from pprint import pprint
+from random import shuffle
+
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+# import tensorflow as tf
+
+import augment
+
+class_label_id_map = {
+    '1' : 0,
+    '2' : 1,
+    '3' : 2,
+    '4' : 3,
+    '5' : 4,
+    '6' : 5,
+    '7' : 6,
+    '8' : 7,
+    '9' : 8,
+    '0' : 9,
+    '℃' : 10,
+    '℉' : 11,
+    ':' : 12,
+    '.' : 13,
+    '%' : 14,
+    '-' : 15,
+    'panel' : 16,
+}
+
+g_image_feature_map = {
+    'image/height': tf.io.FixedLenFeature([], tf.int64),
+    'image/width': tf.io.FixedLenFeature([], tf.int64),
+    
+    # 'image/key/sha256': tf.io.FixedLenFeature([], tf.string),
+    'image/encoded': tf.io.FixedLenFeature([], tf.string),
+    # 'image/format': tf.io.FixedLenFeature([], tf.string),
+    
+    'image/panel/bbox/xmin': tf.io.FixedLenFeature([], tf.float32),
+    'image/panel/bbox/ymin': tf.io.FixedLenFeature([], tf.float32),
+    'image/panel/bbox/xmax': tf.io.FixedLenFeature([], tf.float32),
+    'image/panel/bbox/ymax': tf.io.FixedLenFeature([], tf.float32),
+    
+    'image/object/bbox/xmins': tf.io.VarLenFeature(tf.float32),
+    'image/object/bbox/xmaxs': tf.io.VarLenFeature(tf.float32),
+    'image/object/bbox/ymins': tf.io.VarLenFeature(tf.float32),
+    'image/object/bbox/ymaxs': tf.io.VarLenFeature(tf.float32),
+    'image/object/class/texts': tf.io.VarLenFeature(tf.string),
+    'image/object/class/ids': tf.io.VarLenFeature(tf.int64),
+}
+
+
+# def build_tf_train_example(image_path, 
+#                            width, height, 
+#                            panel_ltrb,
+#                            digits):
+
+#     """
+#     panel_ltrb:
+#         - [xmin, ymin, xmax, ymax]
+#         - e.g. [0.01, 0.05, 0.23, 0.15]
+#     digits:
+#         - [digit_dict1, digit_dict2, ...]
+#         - e.g. digits[0]['class_text'] == '8'
+#     """
+#     img_raw = open(image_path, 'rb').read()
+#     key = hashlib.sha256(img_raw).hexdigest()
+
+#     xmins = []
+#     ymins = []
+#     xmaxs = []
+#     ymaxs = []
+#     classes_text = []
+#     classes_id = []
+#     for digit in digits:
+#         xmins.append(digit['xmin'])
+#         ymins.append(digit['ymin'])
+#         xmaxs.append(digit['xmax'])
+#         ymaxs.append(digit['ymax'])
+#         classes_text.append(digit['class_text'].encode('utf8'))
+#         classes_id.append(digit['class_id'])
+
+#     example = tf.train.Example(features=tf.train.Features(feature={
+#         'image/height': tf.train.Feature(
+#             int64_list=tf.train.Int64List(value=[height])),
+#         'image/width': tf.train.Feature(
+#             int64_list=tf.train.Int64List(value=[width])),
+        
+#         'image/key/sha256': tf.train.Feature(
+#             bytes_list=tf.train.BytesList(value=[key.encode('utf8')])),
+#         'image/encoded': tf.train.Feature(
+#             bytes_list=tf.train.BytesList(value=[img_raw])),
+#         'image/format': tf.train.Feature(
+#             bytes_list=tf.train.BytesList(value=['jpeg'.encode('utf8')])),
+        
+#         'image/panel/bbox/xmin': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=[panel_ltrb[0]])),
+#         'image/panel/bbox/ymin': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=[panel_ltrb[1]])),
+#         'image/panel/bbox/xmax': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=[panel_ltrb[2]])),
+#         'image/panel/bbox/ymax': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=[panel_ltrb[3]])),
+        
+#         'image/object/bbox/xmin': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=xmins)),
+#         'image/object/bbox/xmax': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=xmaxs)),
+#         'image/object/bbox/ymin': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=ymins)),
+#         'image/object/bbox/ymax': tf.train.Feature(
+#             float_list=tf.train.FloatList(value=ymaxs)),
+#         'image/object/class/text': tf.train.Feature(
+#             bytes_list=tf.train.BytesList(value=classes_text)),
+#         'image/object/class/id': tf.train.Feature(
+#             int64_list=tf.train.Int64List(value=classes_id))
+#     }))
+
+#     return example
+
+
+# def generate_tf_records_from_vott(vott_json, image_dir, output_dir):
+#     with open(vott_json) as vott_buffer:
+#         vott = json.loads(vott_buffer.read())
+
+#     for i, v in enumerate(list(vott['assets'].values())[::-1]):
+#         image_path = os.path.join(image_dir, v['asset']['name'])
+#         image_h = v['asset']['size']['height'] 
+#         image_w = v['asset']['size']['width']
+#         # find panel
+#         panels = []
+#         for region in v['regions']:
+#             if region['tags'][0] != 'panel':
+#                 continue
+                
+#             h = float(region['boundingBox']['height'])
+#             w = float(region['boundingBox']['width'])
+#             l = float(region['boundingBox']['left'])
+#             t = float(region['boundingBox']['top'])
+
+#             r = l + w
+#             b = t + h
+
+#             panel_xmin = l / image_w
+#             panel_ymin = t / image_h
+#             panel_xmax = r / image_w
+#             panel_ymax = b / image_h
+
+#             panels.append((panel_xmin, panel_ymin, panel_xmax, panel_ymax))
+
+#         # find elemets in each panel
+#         for p, panel_ltrb in enumerate(panels):
+#             digits = []
+#             for region in v['regions']:
+#                 if region['tags'][0] == 'panel':
+#                     continue
+                
+#                 h = float(region['boundingBox']['height'])
+#                 w = float(region['boundingBox']['width'])
+#                 l = float(region['boundingBox']['left'])
+#                 t = float(region['boundingBox']['top'])
+
+#                 r = l + w
+#                 b = t + h
+                
+#                 l /= image_w
+#                 t /= image_h
+#                 r /= image_w
+#                 b /= image_h
+
+#                 if all([l >= panel_ltrb[0],
+#                         t >= panel_ltrb[1],
+#                         r <= panel_ltrb[2],
+#                         b <= panel_ltrb[3]]):
+                    
+#                     digit_dict = {}
+#                     xmin = (l-panel_ltrb[0]) / (panel_ltrb[2]-panel_ltrb[0])
+#                     ymin = (t-panel_ltrb[1]) / (panel_ltrb[3]-panel_ltrb[1])
+#                     xmax = (r-panel_ltrb[0]) / (panel_ltrb[2]-panel_ltrb[0])
+#                     ymax = (b-panel_ltrb[1]) / (panel_ltrb[3]-panel_ltrb[1])
+
+#                     digit_dict['xmin'] = xmin
+#                     digit_dict['ymin'] = ymin
+#                     digit_dict['xmax'] = xmax
+#                     digit_dict['ymax'] = ymax
+#                     digit_dict['class_text'] = region['tags'][0]
+#                     digit_dict['class_id'] = class_label_id_map[region['tags'][0]]
+                    
+#                     digits.append(digit_dict)
+
+#             example = build_tf_train_example(
+#                 image_path, image_w, image_h,
+#                 panel_ltrb, digits
+#             )
+
+#             tfrecord_path = os.path.join(output_dir, f'{i:04d}_{p}.tfrecord')
+#             with tf.io.TFRecordWriter(tfrecord_path) as writer:
+#                 writer.write(example.SerializeToString())
+
+
+def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
+                                random_color=False,
+                                transform_num_per_image=0, valid_ratio=0.2):
+    with open(vott_json) as vott_buffer:
+        vott = json.loads(vott_buffer.read())
+
+    data_output_dir = os.path.join(output_dir, 'data/')
+    if not os.path.exists(data_output_dir):
+        os.makedirs(data_output_dir)
+
+    total_list = []
+    for i, v in enumerate(list(vott['assets'].values())[::-1]):
+        image_path = os.path.join(image_dir, v['asset']['name'])
+        image_name = os.path.splitext(v['asset']['name'])[0]
+        image = cv2.imread(image_path)
+
+        # find panel
+        panels = []
+        for region in v['regions']:
+            if region['tags'][0] != 'panel':
+                continue
+                
+            h = float(region['boundingBox']['height'])
+            w = float(region['boundingBox']['width'])
+            l = float(region['boundingBox']['left'])
+            t = float(region['boundingBox']['top'])
+
+            r = l + w
+            b = t + h
+
+            l,t,r,b = int(l), int(t), int(r), int(b)
+            panels.append((l, t, r, b))
+
+        # find elemets in each panel
+        for p, panel_ltrb in enumerate(panels):
+            digits = []
+            
+            for region in v['regions']:
+                if region['tags'][0] == 'panel':
+                    continue
+                
+                h = float(region['boundingBox']['height'])
+                w = float(region['boundingBox']['width'])
+                l = float(region['boundingBox']['left'])
+                t = float(region['boundingBox']['top'])
+
+                r = l + w
+                b = t + h
+                
+                if all([l >= panel_ltrb[0],
+                        t >= panel_ltrb[1],
+                        r <= panel_ltrb[2],
+                        b <= panel_ltrb[3]]):
+
+                    class_id = class_label_id_map[region['tags'][0]]
+
+                    digit_dict = {}
+                    digit_dict['class_id'] = class_id
+                    digit_dict['l'] = l
+                    digit_dict['t'] = t
+                    digit_dict['r'] = r
+                    digit_dict['b'] = b
+                    
+                    digits.append(digit_dict)
+
+            # transform + color?
+            for t in range(transform_num_per_image+1):
+                file_name = f'{image_name}_p{p}_t{t}'
+
+                if t == 0:
+                    n_image = image.copy()
+                    n_panel_ltrb, n_digits = panel_ltrb, digits
+
+                else:
+                    n_image, n_panel_ltrb, n_digits = \
+                        augment.random_transform(image.copy(), 
+                                                 panel_ltrb, digits)
+
+                    if random_color:
+                        n_image = augment.random_color(n_image)
+
+                panel_image = n_image[n_panel_ltrb[1]:n_panel_ltrb[3],
+                                      n_panel_ltrb[0]:n_panel_ltrb[2]]
+
+                f_out = open(
+                    os.path.join(data_output_dir, file_name)+'.txt', 'w+')
+
+                total_list.append(os.path.join('data/', f'{file_name}.jpg'))
+                cv2.imwrite(os.path.join(data_output_dir, f'{file_name}.jpg'), 
+                            panel_image)
+
+                for d in n_digits:
+                    l,t,r,b = d['l'], d['t'], d['r'], d['b']
+                    
+                    class_id = d['class_id']
+                    xmin = (l-panel_ltrb[0]) / (panel_ltrb[2]-panel_ltrb[0])
+                    ymin = (t-panel_ltrb[1]) / (panel_ltrb[3]-panel_ltrb[1])
+                    xmax = (r-panel_ltrb[0]) / (panel_ltrb[2]-panel_ltrb[0])
+                    ymax = (b-panel_ltrb[1]) / (panel_ltrb[3]-panel_ltrb[1])
+                        
+                    c_x = (xmin+xmax)/2
+                    c_y = (ymin+ymax)/2
+                    w = xmax-xmin
+                    h = ymax-ymin
+
+                    f_out.write(f'{class_id} {c_x} {c_y} {w} {h}\n')
+            
+                f_out.close()
+            
+        random.shuffle(total_list)
+
+        valid_num = int(len(total_list)*valid_ratio)
+        
+        valid_list = total_list[:valid_num]
+        train_list = total_list[valid_num:]
+
+        with open(os.path.join(output_dir, 'train.txt'), 'w') as f:
+            for line in train_list:
+                f.write(line+'\n')
+
+        with open(os.path.join(output_dir, 'valid.txt'), 'w') as f:
+            for line in valid_list:
+                f.write(line+'\n')
+                
+
+if __name__ == '__main__':
+
+    generate_yolo_org_from_vott(
+        vott_json='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export/digits-export.json',
+        image_dir='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export',
+        output_dir='./digit_data_test'
+    )
+
+
