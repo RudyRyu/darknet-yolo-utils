@@ -288,7 +288,7 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                             panel_ltrb, digits,
                             batch=transform_num_per_image,
                             random_geometry=True,
-                            random_color=True)
+                            random_color=random_color)
 
                 for b, (aug_image, panel, digits) in enumerate(zip(b_images, 
                                                                    b_panel,
