@@ -144,18 +144,29 @@ def random_augmentation(image, panel_ltrb, digits,
         ], random_order=True),
 
         # random color
-        iaa.SomeOf((1, if_(random_color, 5, 0)),[
+        iaa.SomeOf((2, if_(random_color, 7, 0)),[
             iaa.ContrastNormalization((0.7, 1.3), per_channel=0.5),
             iaa.Dropout(p=(0, 0.01), per_channel=0.5),
             iaa.Add((-40, 40), per_channel=0.5),
             iaa.Sharpen(alpha=(0.3, 0.7), lightness=(0.75, 1.25)),
-            # iaa.Grayscale(alpha=(0.1, 1.0)),
+            iaa.Grayscale(alpha=(0.1, 1.0)),
 
-            sometimes1(iaa.Sequential([
+            iaa.Sequential([
                  iaa.ChangeColorspace(from_colorspace="RGB", to_colorspace="HSV"),
-                 iaa.WithChannels(0, iaa.Add((30, 70))),
+                 iaa.WithChannels(0, iaa.Add((10, 100))),
                  iaa.ChangeColorspace(from_colorspace="HSV", to_colorspace="RGB")
-            ])),
+            ]),
+
+            # Blur
+            iaa.SomeOf(1,[
+                iaa.GaussianBlur(sigma=(0.1, 1.0)),
+                iaa.AverageBlur(k=(1, 3)),
+                iaa.MotionBlur(k=5, angle=[-45, 45]),
+                iaa.BilateralBlur(d=(1, 7),
+                                  sigma_color=(10, 250), 
+                                  sigma_space=(10, 250))
+            ]),
+
         ], random_order=True)
     ])
 
