@@ -143,6 +143,20 @@ def crop_image(image, roi):
     return retImg
 
 
+def combine_result(idxs, boxes, class_ids, labels):
+
+    x_and_class_list = []
+    for i in idxs.flatten():
+        x_and_class_list.append((boxes[i][0], labels[class_ids[i]]))
+
+    x_and_class_str_list = sorted(x_and_class_list, key=lambda tup: tup[0])
+
+    result = ''
+    for _, class_str in x_and_class_str_list:
+        result += class_str
+
+    return result
+
 def detect_rois(image, roi_points, roi_size_wh, net, output_names, 
                 score_thresh):
     
@@ -228,7 +242,17 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
                 cv2.imshow(f'panel_{r}', cv2.resize(sel, (256, 128)))
 
+            combined = combine_result(idxs, boxes, class_ids, labels=LABELS)
+            cv2.rectangle(frame, roi_points[r*2], roi_points[r*2+1],
+                          (0,255,0), 2)
+
+            cv2.putText(frame, combined, roi_points[r*2],
+                        cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+
+
             # show the output image
+
+        cv2.imshow('frame', frame)
         cv2.waitKey()
             
 
