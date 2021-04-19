@@ -169,12 +169,12 @@ def random_augmentation(image, panel_ltrb, digits,
         ], random_order=True)
     ])
 
-    batch_aug_images, batch_aug_boxes = seq(images=batch_images, 
+    batch_aug_image, batch_aug_boxes = seq(images=batch_images, 
                                             bounding_boxes=batch_boxes)
 
     batch_panel_ltrb = []
     batch_digits = []
-    for aug_image, aug_boxes in zip(batch_aug_images, batch_aug_boxes):
+    for aug_image, aug_boxes in zip(batch_aug_image, batch_aug_boxes):
 
         batch_panel_ltrb.append((aug_boxes[0].x1, aug_boxes[0].y1, 
                                  aug_boxes[0].x2, aug_boxes[0].y2))
@@ -202,7 +202,7 @@ def random_augmentation(image, panel_ltrb, digits,
         # cv2.imshow('after', image_after)
         # cv2.waitKey()
 
-    return batch_aug_images, batch_panel_ltrb, batch_digits
+    return batch_aug_image, batch_panel_ltrb, batch_digits
 
 if __name__ == '__main__':
 
