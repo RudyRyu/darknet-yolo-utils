@@ -75,8 +75,6 @@ def getSelectionsFromImage(img):
             cv2.imshow("Camera",image)
 
     if ((len(refPts) % 2) == 0):
-        print(numSelected)
-        print(refPts)
         for i in range(numSelected):
             roi = clone[refPts[0+(i*2)][1]:refPts[1+(i*2)][1],
                         refPts[0+(2*i)][0]:refPts[1+(2*i)][0]]
