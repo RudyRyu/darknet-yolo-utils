@@ -368,7 +368,7 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path, score_thre
                 0.5, color, 1)
 
         # show the output image
-        cv2.imshow("Image", cv2.resize(image, (256, 128)))
+        cv2.imshow("Image", cv2.resize(image, (192, 96)))
         cv2.waitKey()
 
     # for b in boxes:
