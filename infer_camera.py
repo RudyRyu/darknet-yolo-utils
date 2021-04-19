@@ -179,7 +179,7 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
 
 
 def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
-                          label_path, score_thresh):
+                          label_path, score_thresh, frame_interval=30):
     
     LABELS = open(label_path).read().strip().split('\n')
     np.random.seed(42)
@@ -205,8 +205,12 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
     roi_points = image_selection.getSelectionsFromImage(frame)
 
+    frame_num = 0
     while True:
         _, frame = cap.read()
+        frame_num += 1
+        if frame_num % frame_interval != 0:
+            continue
 
         idxs_list, boxes_list, scores_list, class_ids_list = \
             detect_rois(
