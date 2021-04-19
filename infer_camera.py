@@ -364,8 +364,8 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path, score_thre
             cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
             # text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
             text = '{}'.format(LABELS[classIDs[i]])
-            cv2.putText(image, text, (x+2, y+h-5), cv2.FONT_HERSHEY_SIMPLEX,
-                0.5, color, 2)
+            cv2.putText(image, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
+                0.5, color, 1)
 
         # show the output image
         cv2.imshow("Image", cv2.resize(image, (256, 128)))
