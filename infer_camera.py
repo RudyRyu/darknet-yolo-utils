@@ -1,7 +1,10 @@
 import math
-import numpy as np
-import cv2
 import time
+
+import cv2
+import numpy as np
+
+import image_selection
 
 def cbox2bbox(cbox):
     w_half = cbox[2] / 2
@@ -133,6 +136,102 @@ def draw_rect(img, bb, size, color):
     return img
 
 
+def crop_image(image, roi):
+    #print roi
+    clone = image.copy()
+    retImg = clone[roi[0][1]:roi[1][1], roi[0][0]:roi[1][0]]
+    return retImg
+
+
+def detect_rois(image, roi_points, roi_size_wh, net, output_names, 
+                score_thresh):
+    
+    idxs_list, boxes_list, scores_list, class_ids_list = [], [], [] ,[]
+    for roi in range(int(len(roi_points)/2)):
+        sel = crop_image(image.copy(),
+                         [roi_points[roi*2],
+                          roi_points[2*roi+1]])
+
+        sel = cv2.resize(sel, (roi_size_wh[0], roi_size_wh[1]))
+        idxs, boxes, scores, class_ids = detect(net, output_names, 
+                                                sel, score_thresh)
+
+        idxs_list.append(idxs)
+        boxes_list.append(boxes)
+        scores_list.append(scores)
+        class_ids_list.append(class_ids)
+
+    return idxs_list, boxes_list, scores_list, class_ids_list
+
+
+def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
+                          label_path, score_thresh):
+    
+    LABELS = open(label_path).read().strip().split('\n')
+    np.random.seed(42)
+    COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
+
+    net = cv2.dnn.readNetFromDarknet(cfg, weights)
+    # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+
+    output_names = []
+    for name in net.getLayerNames():
+        if 'yolo' in name:
+            output_names.append(name)
+
+    print(output_names)
+
+    cap = cv2.VideoCapture(video_path) # Open video
+    #cap = cv2.VideoCapture("rtsp://admin:1234@ijoon.net:30084/h264") # Open video
+    cap.set(3, video_size_wh[0])
+    cap.set(4, video_size_wh[1])
+
+    _, frame = cap.read() # Get first frame
+
+    roi_points = image_selection.getSelectionsFromImage(frame)
+
+    while True:
+        _, frame = cap.read()
+
+        idxs_list, boxes_list, scores_list, class_ids_list = \
+            detect_rois(
+                image=frame, 
+                roi_points=roi_points, roi_size_wh=roi_size_wh,
+                net=net, output_names=output_names, score_thresh=score_thresh)
+        
+        for r, idxs, boxes, scores, class_ids in zip(
+                                                range(int(len(roi_points)/2)), 
+                                                idxs_list, boxes_list, 
+                                                scores_list, class_ids_list):
+
+            sel = crop_image(frame.copy(), [roi_points[r*2], 
+                                            roi_points[r*2+1]])
+
+            sel = cv2.resize(sel, (roi_size_wh[0], roi_size_wh[1]))
+
+            if len(idxs) <= 0:
+                continue
+            
+            # loop over the indexes we are keeping
+            for i in idxs.flatten():
+                # extract the bounding box coordinates
+                (x, y) = (boxes[i][0], boxes[i][1])
+                (w, h) = (boxes[i][2], boxes[i][3])
+                # draw a bounding box rectangle and label on the image
+                color = [int(c) for c in COLORS[class_ids[i]]]
+                cv2.rectangle(sel, (x, y), (x + w, y + h), color, 1)
+                # text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
+                text = '{}'.format(LABELS[class_ids[i]])
+                cv2.putText(sel, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, color, 1)
+
+                cv2.imshow(f'panel_{r}', cv2.resize(sel, (256, 128)))
+
+            # show the output image
+        cv2.waitKey()
+            
+
 def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
     # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
@@ -254,13 +353,23 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path, score_thre
 
 if __name__ == '__main__':
 
-    detect_image(
-        cfg='cfg/digit/sh_digit2.cfg',
-        weights='cfg/digit/sh_digit2_best.weights',
-        image_path='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-inference/sample/test_images/test_image3.png',
-        image_size_wh=(128,64),
+    # detect_image(
+    #     cfg='cfg/digit/sh_digit_x2.cfg',
+    #     weights='cfg/digit/sh_digit_x2_best.weights',
+    #     image_path='sample/test_images/test_image12.png',
+    #     image_size_wh=(128,64),
+    #     label_path='cfg/digit/digit.names',
+    #     score_thresh=0.5,
+    #     output_image_path=''
+    # )
+
+    detect_video_with_roi(
+        cfg='cfg/digit/sh_digit_x2.cfg',
+        weights='cfg/digit/sh_digit_x2_best.weights',
         label_path='cfg/digit/digit.names',
-        score_thresh=0.5,
-        output_image_path=''
+        video_path='/Users/rudy/Desktop/output-cut.mp4', 
+        video_size_wh=(1920/2, 1080/2), 
+        roi_size_wh=(128,64), 
+        score_thresh=0.5
     )
 
