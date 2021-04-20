@@ -347,7 +347,8 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
         writer.release()
 
 
-def detect_image(cfg, weights, image_path, image_size_wh, label_path, score_thresh, output_image_path):
+def detect_image(cfg, weights, image_path, image_size_wh, label_path, 
+                 score_thresh, output_image_path):
     
     LABELS = open(label_path).read().strip().split("\n")
     np.random.seed(42)
