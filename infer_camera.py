@@ -185,9 +185,9 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
 def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
                           label_path, score_thresh, frame_interval=30):
     
-    LABELS = open(label_path).read().strip().split('\n')
+    labels = open(label_path).read().strip().split('\n')
     np.random.seed(42)
-    COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
+    colors = np.random.randint(0, 255, size=(len(labels), 3), dtype="uint8")
 
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
     # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
@@ -257,16 +257,16 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
                     w, h = int(w*w_ratio), int(h*h_ratio)
 
                     # draw a bounding box rectangle and label on the image
-                    color = [int(c) for c in COLORS[class_ids[i]]]
+                    color = [int(c) for c in colors[class_ids[i]]]
                     cv2.rectangle(sel, (x, y), (x + w, y + h), color, 2)
-                    text = "{}:{:.2f}".format(LABELS[class_ids[i]], scores[i])
+                    text = "{}:{:.2f}".format(labels[class_ids[i]], scores[i])
                     # text = '{}'.format(LABELS[class_ids[i]])
                     cv2.putText(
                         sel, text, (x, y+h+15), cv2.FONT_HERSHEY_SIMPLEX, 
                         0.5, color, 1)
                     cv2.imshow(f'panel_{r}', sel)
 
-            combined = combine_result(idxs, boxes, class_ids, labels=LABELS)
+            combined = combine_result(idxs, boxes, class_ids, labels=labels)
             cv2.rectangle(frame, roi_points[r*2], roi_points[r*2+1],
                           (0,255,0), 2)
 
