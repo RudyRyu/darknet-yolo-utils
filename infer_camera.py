@@ -216,6 +216,8 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
         frame_num += 1
         if frame_num % frame_interval != 0:
             continue
+        
+        start_time = time.time()
 
         frame = cv2.resize(frame, video_size_wh)
         idxs_list, boxes_list, scores_list, class_ids_list = \
@@ -272,7 +274,11 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
                         cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
 
             # show the output image
+        fps = 1/(time.time()-start_time)
+        fps = str(int(fps)) + ' fps'
 
+        cv2.putText(frame, fps, (5, 50), cv2.FONT_HERSHEY_SIMPLEX, 
+            1, (100, 255, 0), 2, cv2.LINE_AA)
         cv2.imshow('frame', frame)
         cv2.waitKey()
             
