@@ -198,10 +198,11 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
     cap = cv2.VideoCapture(video_path) # Open video
     #cap = cv2.VideoCapture("rtsp://admin:1234@ijoon.net:30084/h264") # Open video
-    cap.set(3, video_size_wh[0])
-    cap.set(4, video_size_wh[1])
+    # cap.set(3, video_size_wh[0])
+    # cap.set(4, video_size_wh[1])
 
     _, frame = cap.read() # Get first frame
+    frame = cv2.resize(frame, video_size_wh)
 
     roi_points = image_selection.getSelectionsFromImage(frame)
 
@@ -212,6 +213,7 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
         if frame_num % frame_interval != 0:
             continue
 
+        frame = cv2.resize(frame, video_size_wh)
         idxs_list, boxes_list, scores_list, class_ids_list = \
             detect_rois(
                 image=frame, 
