@@ -146,6 +146,10 @@ def crop_image(image, roi):
 def combine_result(idxs, boxes, class_ids, labels):
 
     x_and_class_list = []
+
+    if len(idxs) <= 0:
+        return ''
+
     for i in idxs.flatten():
         x_and_class_list.append((boxes[i][0], labels[class_ids[i]]))
 
@@ -230,23 +234,35 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
             sel = cv2.resize(sel, (roi_size_wh[0], roi_size_wh[1]))
 
-            if len(idxs) <= 0:
-                continue
-            
-            # loop over the indexes we are keeping
-            for i in idxs.flatten():
-                # extract the bounding box coordinates
-                (x, y) = (boxes[i][0], boxes[i][1])
-                (w, h) = (boxes[i][2], boxes[i][3])
-                # draw a bounding box rectangle and label on the image
-                color = [int(c) for c in COLORS[class_ids[i]]]
-                cv2.rectangle(sel, (x, y), (x + w, y + h), color, 1)
-                # text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-                text = '{}'.format(LABELS[class_ids[i]])
-                cv2.putText(sel, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, color, 1)
+            sel_show_size_wh = (192, 96)
 
-                cv2.imshow(f'panel_{r}', cv2.resize(sel, (256, 128)))
+            # loop over the indexes we are keeping
+
+            if len(idxs) <= 0:
+                cv2.imshow(f'panel_{r}', cv2.resize(sel, sel_show_size_wh))
+            
+            else:
+                for i in idxs.flatten():
+                    sel = cv2.resize(sel, sel_show_size_wh)
+                    
+                    w_ratio = sel_show_size_wh[0] / roi_size_wh[0]
+                    h_ratio = sel_show_size_wh[1] / roi_size_wh[1]
+                    
+                    (x, y) = (boxes[i][0], boxes[i][1])
+                    (w, h) = (boxes[i][2], boxes[i][3])
+
+                    x, y = int(x*w_ratio), int(y*h_ratio)
+                    w, h = int(w*w_ratio), int(h*h_ratio)
+
+                    # draw a bounding box rectangle and label on the image
+                    color = [int(c) for c in COLORS[class_ids[i]]]
+                    cv2.rectangle(sel, (x, y), (x + w, y + h), color, 2)
+                    text = "{}:{:.2f}".format(LABELS[class_ids[i]], scores[i])
+                    # text = '{}'.format(LABELS[class_ids[i]])
+                    cv2.putText(
+                        sel, text, (x, y+h+15), cv2.FONT_HERSHEY_SIMPLEX, 
+                        0.5, color, 1)
+                    cv2.imshow(f'panel_{r}', sel)
 
             combined = combine_result(idxs, boxes, class_ids, labels=LABELS)
             cv2.rectangle(frame, roi_points[r*2], roi_points[r*2+1],
@@ -254,7 +270,6 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
             cv2.putText(frame, combined, roi_points[r*2],
                         cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
-
 
             # show the output image
 
