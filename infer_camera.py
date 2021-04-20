@@ -323,7 +323,7 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
 
             fps = 1/(time.time()-start_time)
             fps = str(int(fps)) + ' fps'
-            for b in vl_boxes:
+            for b in boxes:
                 b = np.array(b, dtype=np.int32)
                 img = draw_rect(img, b, video_size_wh, (0, 0, 255))
 
