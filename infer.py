@@ -79,7 +79,7 @@ def detect(net, output_names, img, score_thresh=0.5):
                 confidences.append(float(confidence))
                 classIDs.append(classID)
 
-    idxs = cv2.dnn.NMSBoxes(boxes, confidences, 0.3, 0.5)
+    idxs = cv2.dnn.NMSBoxes(boxes, confidences, score_thresh, 0.5)
 
     return idxs, boxes, confidences, classIDs
 
