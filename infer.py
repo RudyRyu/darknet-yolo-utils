@@ -53,14 +53,14 @@ def detect(net, output_names, img, score_thresh=0.5):
 
     boxes = []
     confidences = []
-    classIDs = []
+    class_ids = []
 
     for output in detections:
         # loop over each of the detections
         for detection in output:
             scores = detection[5:]
-            classID = np.argmax(scores)
-            confidence = scores[classID]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
 
             if confidence > score_thresh:
                 # scale the bounding box coordinates back relative to the
@@ -77,11 +77,11 @@ def detect(net, output_names, img, score_thresh=0.5):
                 # and class IDs
                 boxes.append([x, y, int(width), int(height)])
                 confidences.append(float(confidence))
-                classIDs.append(classID)
+                class_ids.append(class_id)
 
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, score_thresh, 0.5)
 
-    return idxs, boxes, confidences, classIDs
+    return idxs, boxes, confidences, class_ids
 
 
 def detect_rois(image, roi_points, roi_size_wh, net, output_names, 
@@ -318,7 +318,8 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
     cv2.imshow('image', image)
 
     start_time = time.time()
-    idxs, boxes, confidences, classIDs = detect(net, output_names, image, score_thresh)
+    idxs, boxes, scores, class_ids = detect(net, output_names, image, 
+                                            score_thresh)
     fps = 1/(time.time()-start_time)
     fps = str(int(fps)) + ' fps'
 
@@ -329,10 +330,10 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
             # draw a bounding box rectangle and label on the image
-            color = [int(c) for c in COLORS[classIDs[i]]]
+            color = [int(c) for c in COLORS[class_ids[i]]]
             cv2.rectangle(image, (x, y), (x + w, y + h), color, 1)
-            # text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-            text = '{}'.format(LABELS[classIDs[i]])
+            # text = "{}: {:.4f}".format(LABELS[class_ids[i]], confidences[i])
+            text = '{}'.format(LABELS[class_ids[i]])
             cv2.putText(image, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, color, 1)
 
