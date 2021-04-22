@@ -130,9 +130,24 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
     _, frame = cap.read() # Get first frame
     frame = cv2.resize(frame, video_size_wh)
 
-    roi_points = image_selection.getSelectionsFromImage(frame)
+    # roi_points = image_selection.getSelectionsFromImage(frame)
+    roi_points = [(19, 516), (103, 561), (36, 585), (121, 626), 
+                  (49, 652), (132, 690), (145, 507), (237, 554), 
+                  (158, 580), (246, 623), (175, 647), (262, 685), 
+                  (342, 496), (444, 539), (353, 571), (452, 612), 
+                  (368, 640), (463, 682), (495, 487), (600, 532), 
+                  (504, 563), (608, 605), (511, 637), (616, 679), 
+                  (730, 475), (842, 517), (735, 552), (844, 594), 
+                  (741, 626), (849, 667), (899, 465), (1009, 510), 
+                  (905, 543), (1012, 585), (907, 619), (1014, 658), 
+                  (1147, 456), (1252, 500), (1144, 532), (1250, 572), 
+                  (1143, 605), (1248, 648), (1307, 448), (1410, 492), 
+                  (1302, 524), (1406, 567), (1300, 594), (1401, 636), 
+                  (1774, 544), (1875, 586), (1741, 708), (1805, 735), 
+                  (132, 851), (211, 905), (139, 891), (218, 938)]
 
-    frame_num = 0
+    # print(roi_points)
+    frame_num = -1
     while True:
         _, frame = cap.read()
         frame_num += 1
@@ -203,7 +218,13 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
         cv2.putText(frame, fps, (5, 50), cv2.FONT_HERSHEY_SIMPLEX,  
             1, (100, 255, 0), 2, cv2.LINE_AA)
         cv2.imshow('frame', frame)
-        cv2.waitKey()
+
+        print(frame_num)
+        if frame_num == 0:
+            cv2.waitKey()
+
+        else:
+            cv2.waitKey(1)
             
 
 def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
@@ -309,7 +330,7 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
             (w, h) = (boxes[i][2], boxes[i][3])
             # draw a bounding box rectangle and label on the image
             color = [int(c) for c in COLORS[classIDs[i]]]
-            cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
+            cv2.rectangle(image, (x, y), (x + w, y + h), color, 1)
             # text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
             text = '{}'.format(LABELS[classIDs[i]])
             cv2.putText(image, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
@@ -340,12 +361,12 @@ if __name__ == '__main__':
     # )
 
     detect_video_with_roi(
-        cfg='cfg/digit/sh_digit_x2.cfg',
-        weights='cfg/digit/sh_digit_x2_best.weights',
+        cfg='cfg/digit/sh_digit.cfg',
+        weights='cfg/digit/sh_digit_best.weights',
         label_path='cfg/digit/digit.names',
-        video_path='/Users/rudy/Desktop/output-cut.mp4', 
-        video_size_wh=(1920/2, 1080/2), 
-        roi_size_wh=(128,64), 
+        video_path='/Users/rudy/Desktop/output-cut.mp4',
+        video_size_wh=(1920, 1080),
+        roi_size_wh=(128,64),
         score_thresh=0.5
     )
 
