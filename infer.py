@@ -31,46 +31,28 @@ def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
             class_id = np.argmax(confidences)
             score = confidences[class_id]
 
-            if score > score_thresh:
-                # scale the bounding box coordinates back relative to the
-                # size of the image, keeping in mind that YOLO actually
-                # returns the center (x, y)-coordinates of the bounding
-                # box followed by the boxes' width and height
-                box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
-                (centerX, centerY, width, height) = box.astype("int")
-                # use the center (x, y)-coordinates to derive the top and
-                # and left corner of the bounding box
-                x = int(centerX - (width / 2))
-                y = int(centerY - (height / 2))
-                # update our list of bounding box coordinates, confidences,
-                # and class IDs
-                boxes.append([x, y, int(width), int(height)])
-                scores.append(float(score))
-                class_ids.append(class_id)
+            if score <= score_thresh:
+                continue
+
+            # scale the bounding box coordinates back relative to the
+            # size of the image, keeping in mind that YOLO actually
+            # returns the center (x, y)-coordinates of the bounding
+            # box followed by the boxes' width and height
+            box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
+            (centerX, centerY, width, height) = box.astype("int")
+            # use the center (x, y)-coordinates to derive the top and
+            # and left corner of the bounding box
+            x = int(centerX - (width / 2))
+            y = int(centerY - (height / 2))
+            # update our list of bounding box coordinates, confidences,
+            # and class IDs
+            boxes.append([x, y, int(width), int(height)])
+            scores.append(float(score))
+            class_ids.append(class_id)
 
     idxs = cv2.dnn.NMSBoxes(boxes, scores, score_thresh, 0.5)
 
     return idxs, boxes, scores, class_ids
-
-
-def detect_rois(image, roi_points, roi_size_wh, net, output_names, 
-                score_thresh):
-    
-    idxs_list, boxes_list, scores_list, class_ids_list = [], [], [] ,[]
-    for roi in range(int(len(roi_points)/2)):
-        sel = utils.crop_image(image.copy(), [roi_points[roi*2],
-                                              roi_points[2*roi+1]])
-
-        idxs, boxes, scores, class_ids = infer_image(net, sel, output_names, 
-                                                     input_size_wh=roi_size_wh,
-                                                     score_thresh=score_thresh)
-
-        idxs_list.append(idxs)
-        boxes_list.append(boxes)
-        scores_list.append(scores)
-        class_ids_list.append(class_ids)
-
-    return idxs_list, boxes_list, scores_list, class_ids_list
 
 
 def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
@@ -123,6 +105,26 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
 
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
+
+
+def detect_rois(image, roi_points, roi_size_wh, net, output_names, 
+                score_thresh):
+    
+    idxs_list, boxes_list, scores_list, class_ids_list = [], [], [] ,[]
+    for roi in range(int(len(roi_points)/2)):
+        sel = utils.crop_image(image.copy(), [roi_points[roi*2],
+                                              roi_points[2*roi+1]])
+
+        idxs, boxes, scores, class_ids = infer_image(net, sel, output_names, 
+                                                     input_size_wh=roi_size_wh,
+                                                     score_thresh=score_thresh)
+
+        idxs_list.append(idxs)
+        boxes_list.append(boxes)
+        scores_list.append(scores)
+        class_ids_list.append(class_ids)
+
+    return idxs_list, boxes_list, scores_list, class_ids_list
 
 
 def detect_rois_batch_inference(image, roi_points, roi_size_wh, net, 
@@ -195,8 +197,7 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
         frame = cv2.resize(frame, video_size_wh)
         idxs_list, boxes_list, scores_list, class_ids_list = \
             detect_rois_batch_inference(
-                image=frame, 
-                roi_points=roi_points, roi_size_wh=roi_size_wh,
+                image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
                 net=net, output_names=output_names, score_thresh=score_thresh)
         
         fps = 1/(time.time()-start_time)
