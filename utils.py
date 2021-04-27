@@ -56,6 +56,7 @@ def draw_rect(img, bb, size, color):
 
     return img
 
+
 def crop_image(image, roi):
     #print roi
     clone = image.copy()

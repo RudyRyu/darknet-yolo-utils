@@ -7,43 +7,8 @@ import numpy as np
 import image_selection
 import utils
 
-# def detect(net, output_names, img):
-#     blob = cv2.dnn.blobFromImage(img, 1./255.)
-#     net.setInput(blob)
 
-#     detections = net.forward(output_names)
-#     bboxes = []
-#     scores = []
-#     img_h = img.shape[0]
-#     img_w = img.shape[1]
-
-#     print(detections)
-#     for output in detections:
-#         # loop over each of the detections
-
-#         bbox = output[..., 0:4]
-#         obj = output[..., 4]
-#         cls = output[..., 5]
-
-#         for idx in np.argwhere(obj >= 0.5):
-#             b = bbox[idx][0] * [img_w, img_h, img_w, img_h]
-#             x = int((b[0] - b[2] // 2))
-#             y = int((b[1] - b[3] // 2))
-#             w = int(b[2])
-#             h = int(b[3])
-#             bboxes.append([x, y, w, h])
-#             scores.append(float(cls[idx]))
-#     indices = cv2.dnn.NMSBoxes(bboxes, scores, 0.5, 0.5)
-#     bboxes_final = []
-#     for idx in indices:
-#         (x, y, w, h) = bboxes[idx[0]]
-#         cx = x + w / 2
-#         cy = y + h / 2
-#         bboxes_final.append([cx, cy, w, h])
-
-#     return bboxes_final
-
-def detect(net, image, output_names, input_size_wh=None, score_thresh=0.5):
+def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
     
     if input_size_wh:
         blob = cv2.dnn.blobFromImage(image, 1./255., input_size_wh)
@@ -95,9 +60,9 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
         sel = utils.crop_image(image.copy(), [roi_points[roi*2],
                                               roi_points[2*roi+1]])
 
-        idxs, boxes, scores, class_ids = detect(net, sel, output_names, 
-                                                input_size_wh=roi_size_wh,
-                                                score_thresh=score_thresh)
+        idxs, boxes, scores, class_ids = infer_image(net, sel, output_names, 
+                                                     input_size_wh=roi_size_wh,
+                                                     score_thresh=score_thresh)
 
         idxs_list.append(idxs)
         boxes_list.append(boxes)
@@ -106,7 +71,8 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
 
     return idxs_list, boxes_list, scores_list, class_ids_list
 
-def detect_images(net, images, input_size_wh, output_names, score_thresh=0.5):
+
+def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
 
     blob = cv2.dnn.blobFromImages(images, 1./255., input_size_wh)
 
@@ -118,8 +84,6 @@ def detect_images(net, images, input_size_wh, output_names, score_thresh=0.5):
     batch_scores = []
     batch_class_ids = []
     for batch_detection in detections:
-        # loop over each of the detections
-        
         for detection in batch_detection:
             boxes = []
             scores = []
@@ -162,6 +126,7 @@ def detect_images(net, images, input_size_wh, output_names, score_thresh=0.5):
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
+
 def detect_rois_batch_inference(image, roi_points, roi_size_wh, net, 
                                 output_names, score_thresh):
     
@@ -169,11 +134,10 @@ def detect_rois_batch_inference(image, roi_points, roi_size_wh, net,
     for roi in range(int(len(roi_points)/2)):
         sel = utils.crop_image(image.copy(), [roi_points[roi*2],
                                               roi_points[2*roi+1]])
-
         sels.append(sel)
 
     batch_idxs, batch_boxes, batch_scores, batch_class_ids = \
-        detect_images(net, sels, roi_size_wh, output_names, score_thresh)
+        infer_images(net, sels, roi_size_wh, output_names, score_thresh)
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
@@ -294,12 +258,12 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
             1, (100, 255, 0), 2, cv2.LINE_AA)
         cv2.imshow('frame', frame)
 
-        print(frame_num)
         if frame_num == 0:
             cv2.waitKey()
 
         else:
             cv2.waitKey(1)
+            # cv2.waitKey()
             
 
 def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
@@ -337,7 +301,7 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
             start_time = time.time()
             img = cv2.resize(img, video_size_wh)
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            boxes = detect(net, output_names, img)
+            boxes = infer_image(net, output_names, img)
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             fps = 1/(time.time()-start_time)
@@ -393,8 +357,8 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
     cv2.imshow('image', image)
 
     start_time = time.time()
-    idxs, boxes, scores, class_ids = detect(net, output_names, image, 
-                                            score_thresh)
+    idxs, boxes, scores, class_ids = infer_image(net, output_names, image, 
+                                                 score_thresh)
     fps = 1/(time.time()-start_time)
     fps = str(int(fps)) + ' fps'
 
@@ -423,6 +387,7 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
     # cv2.putText(img, fps, (5, 50), cv2.FONT_HERSHEY_SIMPLEX , 1, (100, 255, 0), 2, cv2.LINE_AA)
     # cv2.imshow('results', img)
     # cv2.waitKey()
+
 
 if __name__ == '__main__':
 
