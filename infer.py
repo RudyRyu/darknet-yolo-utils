@@ -1,5 +1,6 @@
 import math
 import time
+from collections import defaultdict
 
 import cv2
 import numpy as np
@@ -75,19 +76,14 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
 def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
 
     blob = cv2.dnn.blobFromImages(images, 1./255., input_size_wh)
-
     net.setInput(blob)
-
     detections = net.forward(output_names)
 
-    batch_boxes = []
-    batch_scores = []
-    batch_class_ids = []
+    boxes_dict = defaultdict(lambda: [])
+    scores_dict = defaultdict(lambda: [])
+    class_ids_dict = defaultdict(lambda: [])
     for batch_detection in detections:
-        for detection in batch_detection:
-            boxes = []
-            scores = []
-            class_ids = []
+        for b, detection in enumerate(batch_detection):
             for output in detection:
                 confidences = output[5:]
                 class_id = np.argmax(confidences)
@@ -108,21 +104,23 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
                 y = int(centerY - (height / 2))
                 # update our list of bounding box coordinates, confidences,
                 # and class IDs
-                boxes.append([x, y, int(width), int(height)])
-                scores.append(float(score))
-                class_ids.append(class_id)
+                boxes_dict[b].append([x, y, int(width), int(height)])
+                scores_dict[b].append(float(score))
+                class_ids_dict[b].append(class_id)
 
-            batch_boxes.append(boxes)
-            batch_scores.append(scores)
-            batch_class_ids.append(class_ids)
 
+    batch_boxes = []
+    batch_scores = []
+    batch_class_ids = []
     batch_idxs = []
-    for boxes, scores, class_ids in zip(batch_boxes, 
-                                        batch_scores, 
-                                        batch_class_ids):
+    for b in range(len(detections[0])):
+        batch_boxes.append(boxes_dict[b])
+        batch_scores.append(scores_dict[b])
+        batch_class_ids.append(class_ids_dict[b])
+        batch_idxs.append(
+            cv2.dnn.NMSBoxes(
+                boxes_dict[b], scores_dict[b], score_thresh, 0.5))
 
-        idxs = cv2.dnn.NMSBoxes(boxes, scores, score_thresh, 0.5)
-        batch_idxs.append(idxs)
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
