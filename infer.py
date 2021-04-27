@@ -103,6 +103,76 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
 
     return idxs_list, boxes_list, scores_list, class_ids_list
 
+def detect_images(net, images, input_size_wh, output_names, score_thresh=0.5):
+
+    blob = cv2.dnn.blobFromImages(images, 1./255., input_size_wh)
+
+    net.setInput(blob)
+
+    detections = net.forward(output_names)
+
+    batch_boxes = []
+    batch_scores = []
+    batch_class_ids = []
+    for batch_detection in detections:
+        # loop over each of the detections
+        
+        for detection in batch_detection:
+            boxes = []
+            scores = []
+            class_ids = []
+            for output in detection:
+                confidences = output[5:]
+                class_id = np.argmax(confidences)
+                score = confidences[class_id]
+
+                if score <= score_thresh:
+                    continue
+
+                # scale the bounding box coordinates back relative to the
+                # size of the image, keeping in mind that YOLO actually
+                # returns the center (x, y)-coordinates of the bounding
+                # box followed by the boxes' width and height
+                box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
+                (centerX, centerY, width, height) = box.astype("int")
+                # use the center (x, y)-coordinates to derive the top and
+                # and left corner of the bounding box
+                x = int(centerX - (width / 2))
+                y = int(centerY - (height / 2))
+                # update our list of bounding box coordinates, confidences,
+                # and class IDs
+                boxes.append([x, y, int(width), int(height)])
+                scores.append(float(score))
+                class_ids.append(class_id)
+
+            batch_boxes.append(boxes)
+            batch_scores.append(scores)
+            batch_class_ids.append(class_ids)
+
+    batch_idxs = []
+    for boxes, scores, class_ids in zip(batch_boxes, 
+                                        batch_scores, 
+                                        batch_class_ids):
+
+        idxs = cv2.dnn.NMSBoxes(boxes, scores, score_thresh, 0.5)
+        batch_idxs.append(idxs)
+
+    return batch_idxs, batch_boxes, batch_scores, batch_class_ids
+
+def detect_rois_batch_inference(image, roi_points, roi_size_wh, net, 
+                                output_names, score_thresh):
+    
+    sels = []
+    for roi in range(int(len(roi_points)/2)):
+        sel = utils.crop_image(image.copy(), [roi_points[roi*2],
+                                              roi_points[2*roi+1]])
+
+        sels.append(sel)
+
+    batch_idxs, batch_boxes, batch_scores, batch_class_ids = \
+        detect_images(net, sels, roi_size_wh, output_names, score_thresh)
+
+    return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
 def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
                           label_path, score_thresh, frame_interval=30):
@@ -158,7 +228,7 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
         frame = cv2.resize(frame, video_size_wh)
         idxs_list, boxes_list, scores_list, class_ids_list = \
-            detect_rois(
+            detect_rois_batch_inference(
                 image=frame, 
                 roi_points=roi_points, roi_size_wh=roi_size_wh,
                 net=net, output_names=output_names, score_thresh=score_thresh)
