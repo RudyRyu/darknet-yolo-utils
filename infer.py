@@ -51,7 +51,15 @@ def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
             scores.append(float(score))
             class_ids.append(class_id)
 
-    idxs = cv2.dnn.NMSBoxes(boxes, scores, score_thresh, 0.5)
+    xywh_boxes = []
+    for cbox in boxes:
+        cbox = cbox * np.array([*input_size_wh, *input_size_wh])
+        print('cbox', cbox)
+        x = int(cbox[0] - (cbox[2] / 2))
+        y = int(cbox[1] - (cbox[3] / 2))
+        xywh_boxes.append([x,y, cbox[2], cbox[3]])
+
+    idxs = cv2.dnn.NMSBoxes(xywh_boxes, scores, score_thresh, 0.5)
 
     return idxs, boxes, scores, class_ids
 
@@ -101,10 +109,17 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
         batch_boxes.append(boxes_dict[b])
         batch_scores.append(scores_dict[b])
         batch_class_ids.append(class_ids_dict[b])
+
+        xywh_boxes = []
+        for cbox in boxes_dict[b]:
+            cbox = cbox * np.array([*input_size_wh, *input_size_wh])
+            x = int(cbox[0] - (cbox[2] / 2))
+            y = int(cbox[1] - (cbox[3] / 2))
+            xywh_boxes.append([x,y, cbox[2], cbox[3]])
+
         batch_idxs.append(
             cv2.dnn.NMSBoxes(
-                boxes_dict[b], scores_dict[b], score_thresh, 0.5))
-
+                xywh_boxes, scores_dict[b], score_thresh, 0.5))
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
