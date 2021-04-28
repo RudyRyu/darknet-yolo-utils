@@ -38,15 +38,16 @@ def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
             # size of the image, keeping in mind that YOLO actually
             # returns the center (x, y)-coordinates of the bounding
             # box followed by the boxes' width and height
-            box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
-            (centerX, centerY, width, height) = box.astype("int")
-            # use the center (x, y)-coordinates to derive the top and
-            # and left corner of the bounding box
-            x = int(centerX - (width / 2))
-            y = int(centerY - (height / 2))
-            # update our list of bounding box coordinates, confidences,
-            # and class IDs
-            boxes.append([x, y, int(width), int(height)])
+            # box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
+            # (centerX, centerY, width, height) = box.astype("int")
+            # # use the center (x, y)-coordinates to derive the top and
+            # # and left corner of the bounding box
+            # x = int(centerX - (width / 2))
+            # y = int(centerY - (height / 2))
+            # # update our list of bounding box coordinates, confidences,
+            # # and class IDs
+            # boxes.append([x, y, int(width), int(height)])
+            boxes.append(output[:4])
             scores.append(float(score))
             class_ids.append(class_id)
 
@@ -74,19 +75,20 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
                 if score <= score_thresh:
                     continue
 
-                # scale the bounding box coordinates back relative to the
-                # size of the image, keeping in mind that YOLO actually
-                # returns the center (x, y)-coordinates of the bounding
-                # box followed by the boxes' width and height
-                box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
-                (centerX, centerY, width, height) = box.astype("int")
-                # use the center (x, y)-coordinates to derive the top and
-                # and left corner of the bounding box
-                x = int(centerX - (width / 2))
-                y = int(centerY - (height / 2))
-                # update our list of bounding box coordinates, confidences,
-                # and class IDs
-                boxes_dict[b].append([x, y, int(width), int(height)])
+                # # scale the bounding box coordinates back relative to the
+                # # size of the image, keeping in mind that YOLO actually
+                # # returns the center (x, y)-coordinates of the bounding
+                # # box followed by the boxes' width and height
+                # box = output[0:4] * np.array([*input_size_wh, *input_size_wh])
+                # (centerX, centerY, width, height) = box.astype("int")
+                # # use the center (x, y)-coordinates to derive the top and
+                # # and left corner of the bounding box
+                # x = int(centerX - (width / 2))
+                # y = int(centerY - (height / 2))
+                # # update our list of bounding box coordinates, confidences,
+                # # and class IDs
+                # boxes_dict[b].append([x, y, int(width), int(height)])
+                boxes_dict[b].append(output[:4])
                 scores_dict[b].append(float(score))
                 class_ids_dict[b].append(class_id)
 
