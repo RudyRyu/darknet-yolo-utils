@@ -71,7 +71,7 @@ def _map(image_path, cfg, weights, output_names, input_size_wh,
             text = f'{labels[t_class_id]}'
             cv2.putText(
                 save_image_true, text, (t_x1+5, t_y2-15), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 3)
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
         
         if len(idxs) >= 1:
@@ -85,12 +85,12 @@ def _map(image_path, cfg, weights, output_names, input_size_wh,
                 label = f'{labels[class_ids[i]]}'
                 cv2.putText(
                     save_image_pred, label, (x1+5, y2-15), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 3)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
                 score = f'{scores[i]:.2f}'
                 cv2.putText(
                     save_image_pred, score, (x1+5, y2+15), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
 
         stack_image = np.vstack((save_image, save_image_true, save_image_pred))
 
