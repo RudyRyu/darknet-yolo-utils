@@ -24,7 +24,7 @@ def _map(image_path, cfg, weights, output_names, input_size_wh,
     label_filename = os.path.splitext(image_path)[0] + '.txt'
 
     all_test_pass = True
-    f_label = open(label_filename, 'r')
+    f_label = list(open(label_filename, 'r'))
     for label in f_label:
         label = label.strip().split(' ')
         t_class_id = int(label[0])
@@ -34,17 +34,19 @@ def _map(image_path, cfg, weights, output_names, input_size_wh,
         t_bbox = utils.cbox2bbox(t_cbox)
 
         label_test_pass = False
-        for i in idxs.flatten():
-            if t_class_id != class_ids[i]:
-                continue
-            
-            cbox = boxes[i][:4] * np.array([*input_size_wh, *input_size_wh])
-            bbox = utils.cbox2bbox(cbox)
-            iou = utils.calc_iou(bbox, t_bbox)
-            
-            if iou >= iou_thresh:
-                label_test_pass = True
-                break
+
+        if len(idxs) >= 1:
+            for i in idxs.flatten():
+                if t_class_id != class_ids[i]:
+                    continue
+                
+                cbox = boxes[i][:4] * np.array([*input_size_wh, *input_size_wh])
+                bbox = utils.cbox2bbox(cbox)
+                iou = utils.calc_iou(bbox, t_bbox)
+                
+                if iou >= iou_thresh:
+                    label_test_pass = True
+                    break
 
         if not label_test_pass:
             all_test_pass = False
@@ -52,21 +54,45 @@ def _map(image_path, cfg, weights, output_names, input_size_wh,
 
     if not all_test_pass:
         save_image = cv2.resize(image, save_size_wh)
-        save_image_org = save_image.copy()
-        for i in idxs.flatten():
-            cbox = boxes[i][:4] * np.array([*save_size_wh, *save_size_wh])
+        save_image_true = save_image.copy()
+        save_image_pred = save_image.copy()
 
-            x1, y1, x2, y2 = list(map(int, utils.cbox2bbox(cbox)))
+        for label in f_label:
+            label = label.strip().split(' ')
+            t_class_id = int(label[0])
 
-            cv2.rectangle(save_image, (x1,y1), (x2,y2), (0,255,0), 2)
+            t_cbox = np.array(tuple(map(float, label[1:5])))
+            t_cbox = t_cbox * np.array([*save_size_wh, *save_size_wh])
+            t_x1, t_y1, t_x2, t_y2 = list(map(int, utils.cbox2bbox(t_cbox)))
 
-            text = "{}:{:.2f}".format(labels[class_ids[i]], scores[i])
-
+            cv2.rectangle(
+                save_image_true, (t_x1,t_y1), (t_x2,t_y2), (0,255,0), 2)
+                
+            text = f'{labels[t_class_id]}'
             cv2.putText(
-                save_image, text, (x1, y2+15), cv2.FONT_HERSHEY_SIMPLEX, 
-                0.5, (0,255,0), 1)
+                save_image_true, text, (t_x1+5, t_y2-15), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 3)
 
-        stack_image = np.vstack((save_image_org, save_image))
+        
+        if len(idxs) >= 1:
+            for i in idxs.flatten():
+                cbox = boxes[i][:4] * np.array([*save_size_wh, *save_size_wh])
+
+                x1, y1, x2, y2 = list(map(int, utils.cbox2bbox(cbox)))
+
+                cv2.rectangle(save_image_pred, (x1,y1), (x2,y2), (0,255,0), 2)
+
+                label = f'{labels[class_ids[i]]}'
+                cv2.putText(
+                    save_image_pred, label, (x1+5, y2-15), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 3)
+
+                score = f'{scores[i]:.2f}'
+                cv2.putText(
+                    save_image_pred, score, (x1+5, y2+15), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
+
+        stack_image = np.vstack((save_image, save_image_true, save_image_pred))
 
         cv2.imwrite(
             os.path.join(save_dir_path, os.path.basename(image_path)), 
@@ -88,8 +114,7 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
 
     """
 
-    if not os.path.exists(save_dir_path):
-        os.makedirs(save_dir_path)
+    
 
     labels = open(label_path).read().strip().split('\n')
     np.random.seed(42)
@@ -104,6 +129,9 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
 
     image_paths = list(open(image_paths_txt, 'r'))
     
+    if not os.path.exists(save_dir_path):
+        os.makedirs(save_dir_path)
+
     partial_map = partial(_map, 
         cfg=cfg, weights=weights, labels=labels, output_names=output_names, 
         input_size_wh=input_size_wh, 
