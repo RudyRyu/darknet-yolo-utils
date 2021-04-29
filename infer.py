@@ -58,7 +58,7 @@ def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
         y = int(cbox[1] - (cbox[3] / 2))
         xywh_boxes.append([x,y, cbox[2], cbox[3]])
 
-    idxs = cv2.dnn.NMSBoxes(xywh_boxes, scores, score_thresh, 0.5)
+    idxs = cv2.dnn.NMSBoxes(xywh_boxes, scores, score_thresh, 0.3)
 
     return idxs, boxes, scores, class_ids
 
@@ -119,7 +119,7 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
 
         batch_idxs.append(
             cv2.dnn.NMSBoxes(
-                xywh_boxes, scores_dict[b], score_thresh, 0.5))
+                xywh_boxes, scores_dict[b], score_thresh, 0.3))
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
