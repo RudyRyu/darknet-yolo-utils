@@ -117,9 +117,6 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
         - infer 결과 이미지 저장
 
     """
-
-    
-
     labels = open(label_path).read().strip().split('\n')
     np.random.seed(42)
     colors = np.random.randint(0, 255, size=(len(labels), 3), dtype='uint8')
@@ -143,7 +140,8 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
         save_size_wh=save_size_wh, save_dir_path=save_dir_path)
 
     pool = mp.Pool(processes=mp.cpu_count())
-    pool.map(partial_map, image_paths[:500])
+    result = pool.map(partial_map, image_paths)
+
     total_num = len(result)
     valid_num = len(result) - sum(result)
 
@@ -154,8 +152,8 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
 
 if __name__ == '__main__':
     evaluate(
-        cfg='cfg/digit/yolov3-tiny-digit_d2.cfg',
-        weights='cfg/digit/yolov3-tiny-digit_d2_best.weights',
+        cfg='cfg/digit/sh_digit.cfg',
+        weights='cfg/digit/sh_digit_best.weights',
         label_path='cfg/digit/digit.names',
         image_paths_txt='digit_data/valid.txt',
         input_size_wh=(128,64),
