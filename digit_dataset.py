@@ -1,9 +1,11 @@
-import random
 import hashlib
 import json
+import multiprocessing as mp
 import os
+import random
 from collections import defaultdict
 from copy import deepcopy
+from functools import partial
 from pprint import pprint
 from random import shuffle
 
@@ -218,13 +220,12 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
     for v in list(vott['assets'].values())[::-1]:
         image_path = os.path.join(image_dir, v['asset']['name'])
         print(image_path)
-
-        
         image_name = os.path.splitext(v['asset']['name'])[0]
 
         if image_name in ['0166_4', '0183_5', '0183_6', '0356_2', '0356_3']:
             continue
         
+        image = cv2.imread(image_path)
 
         # find panel
         panels = []
@@ -335,6 +336,186 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
                 
                     f_out.close()
 
+
+    with open(os.path.join(output_dir, 'total.txt'), 'w') as f:
+        for line in total_list:
+            f.write(line+'\n')
+
+    random.shuffle(total_list)
+    valid_num = int(len(total_list)*valid_ratio)
+    valid_list = total_list[:valid_num]
+    train_list = total_list[valid_num:]
+
+    with open(os.path.join(output_dir, 'train.txt'), 'w') as f:
+        for line in train_list:
+            f.write(line+'\n')
+
+    with open(os.path.join(output_dir, 'valid.txt'), 'w') as f:
+        for line in valid_list:
+            f.write(line+'\n')
+
+
+
+
+def _generate_worker(v, image_dir, data_output_dir, random_color, 
+                     transform_num_per_panel, lock, total_list):
+
+    image_path = os.path.join(image_dir, v['asset']['name'])
+    image_name = os.path.splitext(v['asset']['name'])[0]
+
+    if image_name in ['0166_4', '0183_5', '0183_6', '0356_2', '0356_3']:
+        return
+    
+    image = cv2.imread(image_path)
+
+    # find panel
+    panels = []
+    for region in v['regions']:
+        if region['tags'][0] != 'panel':
+            continue
+            
+        h = float(region['boundingBox']['height'])
+        w = float(region['boundingBox']['width'])
+        l = float(region['boundingBox']['left'])
+        t = float(region['boundingBox']['top'])
+
+        r = l + w
+        b = t + h
+
+        l,t,r,b = int(l), int(t), int(r), int(b)
+        panels.append((l, t, r, b))
+
+    # find elemets in each panel
+    for p, panel_ltrb in enumerate(panels):
+        digits = []
+        
+        for region in v['regions']:
+            if region['tags'][0] == 'panel':
+                continue
+            
+            class_id = class_label_id_map[region['tags'][0]]
+
+            if class_id in [10, 11, 14]:
+                continue
+
+            h = float(region['boundingBox']['height'])
+            w = float(region['boundingBox']['width'])
+            l = float(region['boundingBox']['left'])
+            t = float(region['boundingBox']['top'])
+
+            r = l + w
+            b = t + h
+            
+            if all([l >= panel_ltrb[0],
+                    t >= panel_ltrb[1],
+                    r <= panel_ltrb[2],
+                    b <= panel_ltrb[3]]):
+
+                digit_dict = {}
+                digit_dict['class_id'] = class_id
+                digit_dict['l'] = l
+                digit_dict['t'] = t
+                digit_dict['r'] = r
+                digit_dict['b'] = b
+                
+                digits.append(digit_dict)
+
+        for t in range(2):
+            # not augmentation
+            if t == 0:
+                # b means batch
+                b_images = np.expand_dims(image, axis=0)
+                b_panel, b_digits = [panel_ltrb], [digits]
+
+            # augmentation
+            else:
+                b_images, b_panel, b_digits = \
+                    augment.random_augmentation(
+                        image.copy(),
+                        panel_ltrb, digits,
+                        batch=transform_num_per_panel,
+                        random_geometry=True,
+                        random_color=random_color)
+
+            for b, (aug_image, panel, digits) in enumerate(zip(b_images, 
+                                                                b_panel,
+                                                                b_digits)):
+
+                if t==0:
+                    file_name = f'{image_name}_p{p}'
+                else:
+                    file_name = f'{image_name}_p{p}_a{b}'
+
+                panel_image = aug_image[int(panel[1]):int(panel[3]),
+                                        int(panel[0]):int(panel[2])]
+
+                f_out = open(
+                    os.path.join(data_output_dir, file_name)+'.txt', 'w+')
+
+                try:
+                    cv2.imwrite(
+                        os.path.join(data_output_dir, f'{file_name}.jpg'), 
+                        panel_image)
+
+                except:
+                    print(f'{file_name} raise an error')
+                    continue
+                
+                else:
+                    lock.acquire()
+
+                    total_list.append(
+                        os.path.join('data/', f'{file_name}.jpg'))
+
+                    lock.release()
+
+                for d in digits:
+                    class_id = d['class_id']
+                    l,t,r,b = d['l'], d['t'], d['r'], d['b']
+
+                    xmin = (l-panel[0]) / (panel[2]-panel[0])
+                    ymin = (t-panel[1]) / (panel[3]-panel[1])
+                    xmax = (r-panel[0]) / (panel[2]-panel[0])
+                    ymax = (b-panel[1]) / (panel[3]-panel[1])
+                        
+                    c_x = (xmin+xmax)/2
+                    c_y = (ymin+ymax)/2
+                    w = xmax-xmin
+                    h = ymax-ymin
+
+                    f_out.write(f'{class_id} {c_x} {c_y} {w} {h}\n')
+            
+                f_out.close()
+
+
+def generate_yolo_org_from_vott_multiprocess(vott_json, image_dir, output_dir,
+                                             random_color=False,
+                                             transform_num_per_panel=5, 
+                                             valid_ratio=0.2,
+                                             process_num=mp.cpu_count()):
+                                
+    with open(vott_json) as vott_buffer:
+        vott = json.loads(vott_buffer.read())
+
+    data_output_dir = os.path.join(output_dir, 'data/')
+    if not os.path.exists(data_output_dir):
+        os.makedirs(data_output_dir)
+
+    lock = mp.Manager().Lock()
+    total_list = mp.Manager().list()
+
+    partial_map = partial(_generate_worker, 
+        image_dir=image_dir, 
+        data_output_dir=data_output_dir, 
+        random_color=random_color, 
+        transform_num_per_panel=transform_num_per_panel,
+        lock=lock,
+        total_list=total_list)
+
+    pool = mp.Pool(processes=process_num)
+    result = pool.map(partial_map, list(vott['assets'].values())[::-1])
+
+    total_list.sort()
     with open(os.path.join(output_dir, 'total.txt'), 'w') as f:
         for line in total_list:
             f.write(line+'\n')
@@ -352,13 +533,13 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
         for line in valid_list:
             f.write(line+'\n')
 
-
+            
 if __name__ == '__main__':
 
-    generate_yolo_org_from_vott(
+    generate_yolo_org_from_vott_multiprocess(
         vott_json='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export/digits-export.json',
         image_dir='/Users/rudy/Desktop/Development/Virtualenv/text-recognition/dataset/digits/renamed/target/vott-json-export',
-        output_dir='./digit_data',
+        output_dir='data_test/',
         transform_num_per_panel=100, 
         random_color=True,
         valid_ratio=0.2
