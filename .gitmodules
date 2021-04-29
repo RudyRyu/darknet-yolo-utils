@@ -1,3 +1,6 @@
 [submodule "darknet"]
 	path = darknet
 	url = https://github.com/begging/darknet
+[submodule "tensorflow-yolov4-tflite.git"]
+	path = tensorflow-yolov4-tflite
+	url = https://github.com/begging/tensorflow-yolov4-tflite.git
