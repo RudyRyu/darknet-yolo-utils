@@ -1,12 +1,12 @@
-import math
 import time
 from collections import defaultdict
 
 import cv2
 import numpy as np
 
-import image_selection
 import utils
+import image_selection
+
 
 
 def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
@@ -54,7 +54,6 @@ def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
     xywh_boxes = []
     for cbox in boxes:
         cbox = cbox * np.array([*input_size_wh, *input_size_wh])
-        print('cbox', cbox)
         x = int(cbox[0] - (cbox[2] / 2))
         y = int(cbox[1] - (cbox[3] / 2))
         xywh_boxes.append([x,y, cbox[2], cbox[3]])
@@ -68,8 +67,9 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
 
     blob = cv2.dnn.blobFromImages(images, 1./255., input_size_wh)
     net.setInput(blob)
-    detections = net.forward(output_names)
 
+    detections = net.forward(output_names)
+    
     boxes_dict = defaultdict(lambda: [])
     scores_dict = defaultdict(lambda: [])
     class_ids_dict = defaultdict(lambda: [])

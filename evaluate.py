@@ -134,21 +134,21 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
     if not os.path.exists(save_dir_path):
         os.makedirs(save_dir_path)
 
-    partial_map = partial(_evaluate_worker, 
+    _partial_map = partial(_evaluate_worker, 
         cfg=cfg, weights=weights, labels=labels, output_names=output_names, 
         input_size_wh=input_size_wh, 
         score_thresh=score_thresh, iou_thresh=iou_thresh, 
         save_size_wh=save_size_wh, save_dir_path=save_dir_path)
 
     pool = mp.Pool(processes=mp.cpu_count())
-    result = pool.map(partial_map, image_paths)
+    result = pool.map(_partial_map, image_paths)
 
     total_num = len(result)
     valid_num = len(result) - sum(result)
 
     print(f'total image: {total_num}')
     print(f'valid image: {valid_num}')
-    print(f'precision: {valid_num / total_num:0.3f} ')
+    print(f'precision: {valid_num / total_num:0.3f}')
 
 
 if __name__ == '__main__':

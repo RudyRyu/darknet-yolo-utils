@@ -355,8 +355,6 @@ def generate_yolo_org_from_vott(vott_json, image_dir, output_dir,
             f.write(line+'\n')
 
 
-
-
 def _generate_worker(v, image_dir, data_output_dir, random_color, 
                      transform_num_per_panel, lock, total_list):
 
@@ -458,7 +456,7 @@ def _generate_worker(v, image_dir, data_output_dir, random_color,
                         panel_image)
 
                 except:
-                    print(f'{file_name} raise an error')
+                    print(f'{file_name} raise cv2.imwrite error')
                     continue
                 
                 else:
@@ -533,7 +531,7 @@ def generate_yolo_org_from_vott_multiprocess(vott_json, image_dir, output_dir,
         for line in valid_list:
             f.write(line+'\n')
 
-            
+
 if __name__ == '__main__':
 
     generate_yolo_org_from_vott_multiprocess(
