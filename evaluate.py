@@ -158,7 +158,7 @@ if __name__ == '__main__':
         label_path='cfg/digit/digit.names',
         image_paths_txt='digit_data/valid.txt',
         input_size_wh=(128,64),
-        score_thresh=0.5, 
+        score_thresh=0.7, 
         iou_thresh=0.3,
         save_size_wh=(256, 128),
         save_dir_path='result/'
