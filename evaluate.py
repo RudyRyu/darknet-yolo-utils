@@ -11,8 +11,9 @@ import utils
 import infer
 
 
-def _map(image_path, cfg, weights, output_names, input_size_wh, 
-         score_thresh, iou_thresh, labels, save_size_wh, save_dir_path):
+def _evaluate_worker(image_path, cfg, weights, output_names, input_size_wh, 
+                     score_thresh, iou_thresh, labels, save_size_wh, 
+                     save_dir_path):
 
     image_path = image_path.strip()
     image = cv2.imread(image_path)
@@ -133,7 +134,7 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
     if not os.path.exists(save_dir_path):
         os.makedirs(save_dir_path)
 
-    partial_map = partial(_map, 
+    partial_map = partial(_evaluate_worker, 
         cfg=cfg, weights=weights, labels=labels, output_names=output_names, 
         input_size_wh=input_size_wh, 
         score_thresh=score_thresh, iou_thresh=iou_thresh, 
