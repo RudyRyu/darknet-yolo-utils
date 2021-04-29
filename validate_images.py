@@ -98,6 +98,10 @@ def _map(image_path, cfg, weights, output_names, input_size_wh,
             os.path.join(save_dir_path, os.path.basename(image_path)), 
             stack_image)
 
+        return 1
+    
+    return 0
+
 
 def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh, 
              score_thresh, iou_thresh, save_size_wh, save_dir_path):
@@ -140,6 +144,12 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
 
     pool = mp.Pool(processes=mp.cpu_count())
     pool.map(partial_map, image_paths[:500])
+    total_num = len(result)
+    valid_num = len(result) - sum(result)
+
+    print(f'total image: {total_num}')
+    print(f'valid image: {valid_num}')
+    print(f'precision: {valid_num / total_num:0.3f} ')
 
 
 if __name__ == '__main__':
