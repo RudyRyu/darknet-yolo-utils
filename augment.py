@@ -145,7 +145,7 @@ def random_augmentation(image, panel_ltrb, digits,
 
         # random color
         iaa.SomeOf((2, if_(random_color, 7, 0)),[
-            iaa.ContrastNormalization((0.7, 1.3), per_channel=0.5),
+            iaa.LinearContrast((0.7, 1.3), per_channel=0.5),
             iaa.Dropout(p=(0, 0.01), per_channel=0.5),
             iaa.Add((-40, 40), per_channel=0.5),
             iaa.Sharpen(alpha=(0.3, 0.7), lightness=(0.75, 1.25)),
