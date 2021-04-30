@@ -360,10 +360,7 @@ def _generate_worker(v, image_dir, data_output_dir, random_color,
 
     image_path = os.path.join(image_dir, v['asset']['name'])
     image_name = os.path.splitext(v['asset']['name'])[0]
-
-    if image_name in ['0166_4', '0183_5', '0183_6', '0356_2', '0356_3']:
-        return
-    
+        
     image = cv2.imread(image_path)
 
     # find panel
