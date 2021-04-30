@@ -447,9 +447,6 @@ def _generate_worker(v, image_dir, data_output_dir, random_color,
                 panel_image = aug_image[int(panel[1]):int(panel[3]),
                                         int(panel[0]):int(panel[2])]
 
-                f_out = open(
-                    os.path.join(data_output_dir, file_name)+'.txt', 'w+')
-
                 try:
                     cv2.imwrite(
                         os.path.join(data_output_dir, f'{file_name}.jpg'), 
@@ -464,6 +461,8 @@ def _generate_worker(v, image_dir, data_output_dir, random_color,
                         total_list.append(
                             os.path.join('data/', f'{file_name}.jpg'))
 
+                f_out = open(
+                    os.path.join(data_output_dir, file_name)+'.txt', 'w+')
 
                 for d in digits:
                     class_id = d['class_id']
