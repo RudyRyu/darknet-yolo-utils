@@ -460,12 +460,10 @@ def _generate_worker(v, image_dir, data_output_dir, random_color,
                     continue
                 
                 else:
-                    lock.acquire()
+                    with lock:
+                        total_list.append(
+                            os.path.join('data/', f'{file_name}.jpg'))
 
-                    total_list.append(
-                        os.path.join('data/', f'{file_name}.jpg'))
-
-                    lock.release()
 
                 for d in digits:
                     class_id = d['class_id']
