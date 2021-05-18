@@ -136,15 +136,15 @@ def random_augmentation(image, panel_ltrb, digits,
 
     seq = iaa.Sequential([
         # random transform
-        iaa.SomeOf((1, if_(random_geometry, 4, 0)),[
+        iaa.SomeOf((1, if_(random_geometry, 3, 0)),[
             iaa.PiecewiseAffine(scale=(0, 0.02)),
             iaa.PerspectiveTransform(scale=(0.00, 0.08), fit_output=True),
-            iaa.ElasticTransformation(alpha=(0, 1.0), sigma=0.1),
+            # iaa.ElasticTransformation(alpha=(0, 1.0), sigma=0.1),
             iaa.Affine(shear=(-17,17), fit_output=True)
         ], random_order=True),
 
         # random color
-        iaa.SomeOf((2, if_(random_color, 7, 0)),[
+        iaa.SomeOf((2, if_(random_color, 6, 0)),[
             iaa.LinearContrast((0.7, 1.3), per_channel=0.5),
             iaa.Dropout(p=(0, 0.01), per_channel=0.5),
             iaa.Add((-40, 40), per_channel=0.5),
@@ -157,15 +157,15 @@ def random_augmentation(image, panel_ltrb, digits,
                  iaa.ChangeColorspace(from_colorspace="HSV", to_colorspace="RGB")
             ]),
 
-            # Blur
-            iaa.SomeOf(1,[
-                iaa.GaussianBlur(sigma=(0.1, 1.0)),
-                iaa.AverageBlur(k=(1, 3)),
-                iaa.MotionBlur(k=5, angle=[-45, 45]),
-                iaa.BilateralBlur(d=(1, 7),
-                                  sigma_color=(10, 250), 
-                                  sigma_space=(10, 250))
-            ]),
+            # # Blur
+            # iaa.SomeOf(1,[
+            #     iaa.GaussianBlur(sigma=(0.1, 1.0)),
+            #     iaa.AverageBlur(k=(1, 3)),
+            #     iaa.MotionBlur(k=5, angle=[-45, 45]),
+            #     iaa.BilateralBlur(d=(1, 7),
+            #                       sigma_color=(10, 250), 
+            #                       sigma_space=(10, 250))
+            # ]),
         ], random_order=True)
     ])
 
