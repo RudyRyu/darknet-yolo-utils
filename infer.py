@@ -7,7 +7,7 @@ import numpy as np
 import utils
 
 
-def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
+def infer_image(image, net, output_names, input_size_wh=None, score_thresh=0.5):
     
     if input_size_wh:
         blob = cv2.dnn.blobFromImage(image, 1./255., input_size_wh)
@@ -61,7 +61,7 @@ def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):
     return idxs, boxes, scores, class_ids
 
 
-def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
+def infer_images(images, net, input_size_wh, output_names, score_thresh=0.5):
 
     blob = cv2.dnn.blobFromImages(images, 1./255., input_size_wh)
     net.setInput(blob)
@@ -120,5 +120,3 @@ def infer_images(net, images, input_size_wh, output_names, score_thresh=0.5):
                 xywh_boxes, scores_dict[b], score_thresh, 0.3))
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
-
-def infer_image(net, image, output_names, input_size_wh=None, score_thresh=0.5):

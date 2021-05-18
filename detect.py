@@ -18,7 +18,7 @@ def detect_rois(image, roi_points, roi_size_wh, net, output_names,
                                               roi_points[2*roi+1]])
 
         idxs, boxes, scores, class_ids = \
-            infer.infer_image(net, sel, output_names, 
+            infer.infer_image(sel, net, output_names, 
                 input_size_wh=roi_size_wh,
                 score_thresh=score_thresh)
 
@@ -40,7 +40,7 @@ def detect_rois_batch_inference(image, roi_points, roi_size_wh, net,
         sels.append(sel)
 
     batch_idxs, batch_boxes, batch_scores, batch_class_ids = \
-        infer.infer_images(net, sels, roi_size_wh, output_names, score_thresh)
+        infer.infer_images(sels, net, roi_size_wh, output_names, score_thresh)
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
@@ -208,7 +208,7 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
             start_time = time.time()
             img = cv2.resize(img, video_size_wh)
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            boxes = infer.infer_image(net, output_names, img)
+            boxes = infer.infer_image(img, net, output_names)
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             fps = 1/(time.time()-start_time)
