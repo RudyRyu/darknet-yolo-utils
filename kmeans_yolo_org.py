@@ -124,8 +124,8 @@ if __name__ == "__main__":
     model_image_size = (int(height), int(width))
     assert (model_image_size[0]%32 == 0 and model_image_size[1]%32 == 0), 'model_image_size should be multiples of 32'
 
-    if args.cluster_number != 9 and args.cluster_number != 6 and args.cluster_number != 5:
-        warnings.warn('You choose to generate {} anchor clusters, but default YOLO anchor number should 5, 6 or 9'.format(args.cluster_number))
+    # if args.cluster_number != 9 and args.cluster_number != 6 and args.cluster_number != 5:
+    #     warnings.warn('You choose to generate {} anchor clusters, but default YOLO anchor number should 5, 6 or 9'.format(args.cluster_number))
 
     kmeans = YOLO_Kmeans(args.cluster_number, args.annotation_file, args.anchors_file, model_image_size)
     kmeans.txt2clusters()
