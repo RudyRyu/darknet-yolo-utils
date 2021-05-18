@@ -1,5 +1,7 @@
+import multiprocessing as mp
 import time
 from collections import defaultdict
+from functools import partial
 
 import cv2
 import numpy as np
@@ -44,6 +46,61 @@ def detect_rois_batch_inference(image, roi_points, roi_size_wh, net,
 
     return batch_idxs, batch_boxes, batch_scores, batch_class_ids
 
+
+def _infer_image_worker(image, cfg, weights, 
+                        input_size_wh=None, score_thresh=0.5):
+
+    start_time = time.time()
+
+    net = cv2.dnn.readNetFromDarknet(cfg, weights)
+    # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+
+    output_names = []
+    for name in net.getLayerNames():
+        if 'yolo' in name:
+            output_names.append(name)
+
+    result = infer.infer_image(
+        image, net, output_names, input_size_wh, score_thresh)
+
+    ms = (time.time()-start_time) * 1000
+    print(f'infer: {ms:.2f} ms')
+
+    return result
+
+
+def detect_rois_multiprocess(image, roi_points, roi_size_wh, 
+                             cfg, weights, score_thresh, cpu_num=1):
+
+
+    sels = []
+    for roi in range(int(len(roi_points)/2)):
+        sel = utils.crop_image(image.copy(), [roi_points[roi*2],
+                                              roi_points[2*roi+1]])
+        sels.append(sel)
+
+    _partial_map = partial(_infer_image_worker, 
+        cfg=cfg, weights=weights, 
+        input_size_wh=roi_size_wh, score_thresh=score_thresh)
+
+    start_time = time.time()
+
+    pool = mp.Pool(processes=cpu_num)
+    results = pool.map(_partial_map, sels)
+
+    ms = (time.time()-start_time) * 1000
+    print(f'pool: {ms:.2f} ms')
+
+    idxs_list, boxes_list, scores_list, class_ids_list = [], [], [] ,[]
+    for idxs, boxes, scores, class_ids in results:
+        idxs_list.append(idxs)
+        boxes_list.append(boxes)
+        scores_list.append(scores)
+        class_ids_list.append(class_ids)
+
+    return idxs_list, boxes_list, scores_list, class_ids_list
+    
 
 def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
                           label_path, score_thresh, frame_interval=30):
@@ -102,6 +159,14 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
             detect_rois_batch_inference(
                 image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
                 net=net, output_names=output_names, score_thresh=score_thresh)
+
+        # idxs_list, boxes_list, scores_list, class_ids_list = \
+        #     detect_rois_multiprocess(
+        #         image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
+        #         cfg=cfg, weights=weights, 
+        #         score_thresh=score_thresh,
+        #         cpu_num=mp.cpu_count())
+
         
         ms = (time.time()-start_time) * 1000
         print(f'infer: {ms:.2f} ms')

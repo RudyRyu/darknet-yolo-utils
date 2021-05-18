@@ -505,7 +505,7 @@ def generate_yolo_org_from_vott_multiprocess(vott_json, image_dir, output_dir,
         total_list=total_list)
 
     pool = mp.Pool(processes=process_num)
-    result = pool.map(partial_map, list(vott['assets'].values())[::-1])
+    pool.map(partial_map, list(vott['assets'].values())[::-1])
 
     total_list.sort()
     with open(os.path.join(output_dir, 'total.txt'), 'w') as f:
