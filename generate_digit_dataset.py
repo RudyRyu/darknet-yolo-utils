@@ -456,7 +456,7 @@ def _generate_worker(v, image_dir, data_output_dir, random_color,
                 else:
                     with lock:
                         total_list.append(
-                            os.path.join('data/', f'{file_name}.jpg'))
+                            os.path.join(data_output_dir, f'{file_name}.jpg'))
 
                 f_out = open(
                     os.path.join(data_output_dir, file_name)+'.txt', 'w+')
