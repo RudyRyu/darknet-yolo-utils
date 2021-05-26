@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import numpy as np
 import tensorflow as tf
 
-import save_utils
+import utils
 import common
 
 
@@ -68,4 +68,4 @@ if __name__ == '__main__':
         'score_thresh': SCORE_THRESH
     }
 
-    save_utils.save_tf(**params)
+    utils.save_tf(**params)
