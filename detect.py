@@ -11,8 +11,8 @@ import infer
 import image_selection
 
 
-def detect_rois(image, roi_points, roi_size_wh, net, output_names, 
-                score_thresh):
+def detect_rois_single_inference(image, roi_points, roi_size_wh, net, 
+                                 output_names, score_thresh):
     
     idxs_list, boxes_list, scores_list, class_ids_list = [], [], [] ,[]
     for roi in range(int(len(roi_points)/2)):
