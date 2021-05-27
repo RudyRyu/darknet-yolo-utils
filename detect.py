@@ -331,7 +331,8 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
     cv2.imshow('image', image)
 
     start_time = time.time()
-    idxs, boxes, scores, class_ids = infer.infer_image(net, output_names, image, 
+    idxs, boxes, scores, class_ids = infer.infer_image(image, net, output_names,
+                                                       image_size_wh, 
                                                        score_thresh)
     fps = 1/(time.time()-start_time)
     fps = str(int(fps)) + ' fps'
