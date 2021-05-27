@@ -156,7 +156,7 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
 
         frame = cv2.resize(frame, video_size_wh)
         idxs_list, boxes_list, scores_list, class_ids_list = \
-            detect_rois_batch_inference(
+            detect_rois_single_inference(
                 image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
                 net=net, output_names=output_names, score_thresh=score_thresh)
 
@@ -236,8 +236,8 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
             cv2.waitKey()
 
         else:
-            cv2.waitKey(1)
-            # cv2.waitKey()
+            # cv2.waitKey(1)
+            cv2.waitKey()
             
 
 def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
@@ -369,9 +369,20 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
 
 if __name__ == '__main__':
 
+    # detect_image(
+    #     cfg='cfg/digit/sh_digit.cfg',
+    #     weights='cfg/digit/sh_digit_6000.weights',
+    #     image_path='sample/test_images/test_image31.png',
+    #     image_size_wh=(128,64),
+    #     label_path='cfg/digit/digit.names',
+    #     score_thresh=0.4,
+    #     show_size_wh=(192, 96),
+    #     output_image_path=''
+    # )
+
     detect_video_with_roi(
         cfg='cfg/digit/sh_digit.cfg',
-        weights='cfg/digit/sh_digit_best.weights',
+        weights='cfg/digit/sh_digit_92000.weights',
         label_path='cfg/digit/digit.names',
         video_path='/Users/rudy/Desktop/output-cut.mp4',
         video_size_wh=(1920, 1080),

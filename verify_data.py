@@ -152,7 +152,17 @@ def add_padding_multiprocess(data_dir, ratio_wh, output_dir,
 
         
 if __name__=='__main__':
-    new_train_valid_txt(
-        train_path='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/digit_data_label/train.txt',
-        valid_path='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/digit_data_label/valid.txt'
+    # new_train_valid_txt(
+    #     train_path='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/digit_data_label/train.txt',
+    #     valid_path='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/digit_data_label/valid.txt'
+    # )
+
+    # read_data_and_rewrite_txt(
+    #     data_dir='/Users/rudy/Desktop/untitled folder 2/data/',
+    #     output_dir='/Users/rudy/Desktop/untitled folder 2/output/')
+
+    add_padding_multiprocess(
+        data_dir='/Users/rudy/Desktop/digit_data_noblur/data',
+        ratio_wh=(2,1),
+        output_dir='/Users/rudy/Desktop/digit_data_noblur/padded_data'
     )

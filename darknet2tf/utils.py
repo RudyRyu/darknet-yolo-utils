@@ -79,10 +79,12 @@ def load_weights(model, weights_file, layer_size, output_pos):
 
     j = 0
     for i in range(layer_size):
+
         conv_layer_name = 'conv2d_%d' %i if i > 0 else 'conv2d'
         bn_layer_name = 'batch_normalization_%d' %j if j > 0 else 'batch_normalization'
 
         conv_layer = model.get_layer(conv_layer_name)
+
         filters = conv_layer.filters
         k_size = conv_layer.kernel_size[0]
         in_dim = conv_layer.input_shape[-1]
