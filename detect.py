@@ -306,11 +306,11 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
         writer.release()
 
 def detect_image(cfg, weights, image_path, image_size_wh, label_path, 
-                 score_thresh, output_image_path):
+                 score_thresh, show_size_wh, output_image_path):
     
-    LABELS = open(label_path).read().strip().split("\n")
+    labels = open(label_path).read().strip().split("\n")
     np.random.seed(42)
-    COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
+    colors = np.random.randint(0, 255, size=(len(labels), 3), dtype="uint8")
 
 
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
@@ -356,10 +356,10 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
             w, h = int(w*w_ratio), int(h*h_ratio)
 
             # draw a bounding box rectangle and label on the image
-            color = [int(c) for c in COLORS[class_ids[i]]]
+            color = [int(c) for c in colors[class_ids[i]]]
             cv2.rectangle(image, (x, y), (x + w, y + h), color, 1)
             # text = "{}: {:.4f}".format(LABELS[class_ids[i]], confidences[i])
-            text = '{}'.format(LABELS[class_ids[i]])
+            text = '{}'.format(labels[class_ids[i]])
             cv2.putText(image, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, color, 1)
 
@@ -367,26 +367,7 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
         cv2.imshow("result", image)
         cv2.waitKey()
 
-    # for b in boxes:
-    #     b = np.array(b, dtype=np.int32)
-    #     img = draw_rect(img, b, image_size_wh, (0, 0, 255))
-
-    # cv2.putText(img, fps, (5, 50), cv2.FONT_HERSHEY_SIMPLEX , 1, (100, 255, 0), 2, cv2.LINE_AA)
-    # cv2.imshow('results', img)
-    # cv2.waitKey()
-
-
 if __name__ == '__main__':
-
-    # detect_image(
-    #     cfg='cfg/digit/sh_digit_x2.cfg',
-    #     weights='cfg/digit/sh_digit_x2_best.weights',
-    #     image_path='sample/test_images/test_image12.png',
-    #     image_size_wh=(128,64),
-    #     label_path='cfg/digit/digit.names',
-    #     score_thresh=0.5,
-    #     output_image_path=''
-    # )
 
     detect_video_with_roi(
         cfg='cfg/digit/sh_digit.cfg',

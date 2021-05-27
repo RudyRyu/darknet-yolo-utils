@@ -60,7 +60,7 @@ if __name__ == '__main__':
         'output_pos': OUTPUT_POS,
         'input_size_wh': INPUT_SIZE_WH,
         'output_sizes_wh': OUTPUT_SIZES_WH,
-        'num_class': NUM_CLASS, 
+        'num_class': NUM_CLASS,
         'anchors': ANCHORS,
         'num_anchor': NUM_ANCHOR,
         'strides': STRIDES,
