@@ -14,8 +14,8 @@ NUM_ANCHOR = 6
 ANCHORS = np.array([7,7, 13,31, 21,45, 25,32, 28,48, 38,43]).reshape(1,6,2)
 NUM_CLASS = 16
 XYSCALE = [1]
-INPUT_SIZE_WH = (128, 64)
-OUTPUT_SIZES_WH = [(INPUT_SIZE_WH[0]//8, INPUT_SIZE_WH[1]//8)]
+INPUT_SIZE_HW = (64, 128)
+OUTPUT_SIZES_HW = [(INPUT_SIZE_HW[0]//8, INPUT_SIZE_HW[1]//8)]
 FILTER_MULTIPLIER = 1
 SCORE_THRESH = 0.4
 LAYER_SIZE = 10
@@ -58,8 +58,8 @@ if __name__ == '__main__':
         'save_output_dir': 'sh_digit/checkpoint/',
         'layer_size': LAYER_SIZE,
         'output_pos': OUTPUT_POS,
-        'input_size_wh': INPUT_SIZE_WH,
-        'output_sizes_wh': OUTPUT_SIZES_WH,
+        'input_size_wh': INPUT_SIZE_HW,
+        'output_sizes_wh': OUTPUT_SIZES_HW,
         'num_class': NUM_CLASS,
         'anchors': ANCHORS,
         'num_anchor': NUM_ANCHOR,
