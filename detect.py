@@ -196,11 +196,14 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
                 for i in idxs.flatten():
                     sel = cv2.resize(sel, sel_show_size_wh)
                     
-                    w_ratio = sel_show_size_wh[0] / roi_size_wh[0]
-                    h_ratio = sel_show_size_wh[1] / roi_size_wh[1]
+                    w_ratio = sel_show_size_wh[0]
+                    h_ratio = sel_show_size_wh[1]
                     
                     (x, y) = (boxes[i][0], boxes[i][1])
                     (w, h) = (boxes[i][2], boxes[i][3])
+
+                    x = x - (w/2)
+                    y = y - (h/2)
 
                     x, y = int(x*w_ratio), int(y*h_ratio)
                     w, h = int(w*w_ratio), int(h*h_ratio)
@@ -333,12 +336,24 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
     fps = 1/(time.time()-start_time)
     fps = str(int(fps)) + ' fps'
 
+    image = cv2.resize(image, show_size_wh)
     if len(idxs) > 0:
         # loop over the indexes we are keeping
         for i in idxs.flatten():
+            
             # extract the bounding box coordinates
+            w_ratio = show_size_wh[0]
+            h_ratio = show_size_wh[1]
+            
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
+
+            x = x - (w/2)
+            y = y - (h/2)
+
+            x, y = int(x*w_ratio), int(y*h_ratio)
+            w, h = int(w*w_ratio), int(h*h_ratio)
+
             # draw a bounding box rectangle and label on the image
             color = [int(c) for c in COLORS[class_ids[i]]]
             cv2.rectangle(image, (x, y), (x + w, y + h), color, 1)
@@ -348,7 +363,7 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
                 0.5, color, 1)
 
         # show the output image
-        cv2.imshow("Image", cv2.resize(image, (192, 96)))
+        cv2.imshow("result", image)
         cv2.waitKey()
 
     # for b in boxes:
