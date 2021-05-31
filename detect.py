@@ -255,8 +255,14 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
             cv2.waitKey()
             
 
-def detect_video(cfg, weights, video_path, video_size_wh, output_video_path,
+def detect_video(cfg, weights, label_path, video_path, video_size_wh, 
+                 output_video_path, show_size_wh, score_thresh=0.5,
                  use_cuda=True):
+
+    labels = open(label_path).read().strip().split('\n')
+    np.random.seed(42)
+    colors = np.random.randint(0, 255, size=(len(labels), 3), dtype="uint8")
+
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
     if use_cuda:
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
@@ -281,7 +287,7 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path,
     fps_count = 0
     while cap.isOpened():
         for _ in range(count):
-            is_cap, img = cap.read()
+            is_cap, org_image = cap.read()
 
         fps_count += 1
         count = 1
@@ -291,30 +297,49 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path,
                 continue
 
             start_time = time.time()
-            img = cv2.resize(img, video_size_wh)
+            image = cv2.resize(org_image, video_size_wh)
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            boxes = infer.infer_image(img, net, output_names)
-            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            idxs, boxes, scores, class_ids = \
+                infer.infer_image(image, net, output_names, 
+                    input_size_wh=video_size_wh,
+                    score_thresh=score_thresh)
 
             fps = 1/(time.time()-start_time)
             fps = str(int(fps)) + ' fps'
-            for b in boxes:
-                b = np.array(b, dtype=np.int32)
-                img = utils.draw_rect(img, b, video_size_wh, (0, 0, 255))
 
-            cv2.putText(img, fps, (5, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 
-                        (100, 255, 0), 2, cv2.LINE_AA)
+            print(fps)
 
-            cv2.imshow('results', img)
+            
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            image = cv2.resize(org_image, show_size_wh)
+            if len(idxs) > 0:
+            # loop over the indexes we are keeping
+                for i in idxs.flatten():
+                    
+                    # extract the bounding box coordinates
+                    w_ratio = show_size_wh[0]
+                    h_ratio = show_size_wh[1]
+                    
+                    (x, y) = (boxes[i][0], boxes[i][1])
+                    (w, h) = (boxes[i][2], boxes[i][3])
 
-            if output_video_path:
-                writer.write(img)
+                    x = x - (w/2)
+                    y = y - (h/2)
 
-            ch = cv2.waitKey(1) & 0xFF
-            if ch == 27: # Exit with ESC Key
-                break
-            elif ch == 32:
-                count = 120
+                    x, y = int(x*w_ratio), int(y*h_ratio)
+                    w, h = int(w*w_ratio), int(h*h_ratio)
+
+                    # draw a bounding box rectangle and label on the image
+                    color = [int(c) for c in colors[class_ids[i]]]
+                    cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
+                    # text = "{}: {:.4f}".format(LABELS[class_ids[i]], confidences[i])
+                    text = '{}'.format(labels[class_ids[i]])
+                    cv2.putText(image, text, (x+1, y+h-3), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5, color, 1)
+
+            # show the output image
+            cv2.imshow("result", image)
+            cv2.waitKey(1)
         else:
             break
 
@@ -400,16 +425,29 @@ if __name__ == '__main__':
     #     use_cuda=True
     # )
 
-    detect_video_with_roi(
-        cfg='cfg/digit/sh_digit.cfg',
-        weights='cfg/digit/sh_digit_92000.weights',
-        label_path='cfg/digit/digit.names',
-        video_path='/Users/rudy/Desktop/output-cut.mp4',
-        video_size_wh=(1920, 1080),
-        roi_size_wh=(128,64),
+    detect_video(
+        cfg='cfg/vehicle/yolov4-vl-vs.cfg', 
+        weights='cfg/vehicle/yolov4-vl-vs_best.weights',
+        label_path='cfg/vehicle/vehicle.names',
+        video_path='/Users/rudy/Desktop/Development/sample/sample/vehicle/vehicle_sample1.mp4', 
+        video_size_wh=(512,384), 
+        output_video_path='',
+        show_size_wh=(1920, 1080),
         score_thresh=0.5,
-        mode='batch_inference',
-        use_cuda=True
+        use_cuda=False
     )
+
+
+    # detect_video_with_roi(
+    #     cfg='cfg/digit/sh_digit.cfg',
+    #     weights='cfg/digit/sh_digit_92000.weights',
+    #     label_path='cfg/digit/digit.names',
+    #     video_path='/Users/rudy/Desktop/output-cut.mp4',
+    #     video_size_wh=(1920, 1080),
+    #     roi_size_wh=(128,64),
+    #     score_thresh=0.5,
+    #     mode='batch_inference',
+    #     use_cuda=True
+    # )
 
 
