@@ -103,7 +103,8 @@ def detect_rois_multiprocess(image, roi_points, roi_size_wh,
     
 
 def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
-                          label_path, score_thresh, frame_interval=30):
+                          label_path, score_thresh, frame_interval=30,
+                          mode='batch_inference'):
     
     labels = open(label_path).read().strip().split('\n')
     np.random.seed(42)
@@ -155,17 +156,30 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
         start_time = time.time()
 
         frame = cv2.resize(frame, video_size_wh)
-        idxs_list, boxes_list, scores_list, class_ids_list = \
-            detect_rois_single_inference(
-                image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
-                net=net, output_names=output_names, score_thresh=score_thresh)
 
-        # idxs_list, boxes_list, scores_list, class_ids_list = \
-        #     detect_rois_multiprocess(
-        #         image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
-        #         cfg=cfg, weights=weights, 
-        #         score_thresh=score_thresh,
-        #         cpu_num=mp.cpu_count())
+        if mode == 'multiprocess':
+            idxs_list, boxes_list, scores_list, class_ids_list = \
+                detect_rois_multiprocess(
+                    image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
+                    cfg=cfg, weights=weights, 
+                    score_thresh=score_thresh,
+                    cpu_num=mp.cpu_count())
+
+        elif mode == 'batch_inference':
+            idxs_list, boxes_list, scores_list, class_ids_list = \
+                detect_rois_batch_inference(
+                    image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
+                    net=net, output_names=output_names, 
+                    score_thresh=score_thresh)
+        
+        else: # single inference
+            idxs_list, boxes_list, scores_list, class_ids_list = \
+                detect_rois_single_inference(
+                    image=frame, roi_points=roi_points, roi_size_wh=roi_size_wh,
+                    net=net, output_names=output_names, 
+                    score_thresh=score_thresh)
+
+        
 
         
         ms = (time.time()-start_time) * 1000
@@ -387,7 +401,8 @@ if __name__ == '__main__':
         video_path='/Users/rudy/Desktop/output-cut.mp4',
         video_size_wh=(1920, 1080),
         roi_size_wh=(128,64),
-        score_thresh=0.5
+        score_thresh=0.5,
+        mode='batch_inference'
     )
 
 
