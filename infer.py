@@ -72,6 +72,10 @@ def infer_images(images, net, input_size_wh, output_names, score_thresh=0.5):
     scores_dict = defaultdict(lambda: [])
     class_ids_dict = defaultdict(lambda: [])
     for batch_detection in detections:
+        # When image num is 1, len(batch_detection) is 768. why?
+        if len(batch_detection) == 768:
+            batch_detection = [batch_detection]
+
         for b, detection in enumerate(batch_detection):
             for output in detection:
                 confidences = output[5:]
