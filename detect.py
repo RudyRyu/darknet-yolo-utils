@@ -104,15 +104,16 @@ def detect_rois_multiprocess(image, roi_points, roi_size_wh,
 
 def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh, 
                           label_path, score_thresh, frame_interval=30,
-                          mode='batch_inference'):
+                          mode='batch_inference', use_cuda=True):
     
     labels = open(label_path).read().strip().split('\n')
     np.random.seed(42)
     colors = np.random.randint(0, 255, size=(len(labels), 3), dtype="uint8")
 
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
-    # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+    if use_cuda:
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     output_names = []
     for name in net.getLayerNames():
@@ -254,10 +255,12 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
             cv2.waitKey()
             
 
-def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
+def detect_video(cfg, weights, video_path, video_size_wh, output_video_path,
+                 use_cuda=True):
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
-    # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+    if use_cuda:
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     output_names = []
     for name in net.getLayerNames():
@@ -320,7 +323,8 @@ def detect_video(cfg, weights, video_path, video_size_wh, output_video_path):
         writer.release()
 
 def detect_image(cfg, weights, image_path, image_size_wh, label_path, 
-                 score_thresh, show_size_wh, output_image_path):
+                 score_thresh, show_size_wh, output_image_path,
+                 use_cuda=True):
     
     labels = open(label_path).read().strip().split("\n")
     np.random.seed(42)
@@ -328,8 +332,9 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
 
 
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
-    # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+    if use_cuda:
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     output_names = []
     for name in net.getLayerNames():
@@ -391,7 +396,8 @@ if __name__ == '__main__':
     #     label_path='cfg/digit/digit.names',
     #     score_thresh=0.4,
     #     show_size_wh=(192, 96),
-    #     output_image_path=''
+    #     output_image_path='',
+    #     use_cuda=True
     # )
 
     detect_video_with_roi(
@@ -402,7 +408,8 @@ if __name__ == '__main__':
         video_size_wh=(1920, 1080),
         roi_size_wh=(128,64),
         score_thresh=0.5,
-        mode='batch_inference'
+        mode='batch_inference',
+        use_cuda=True
     )
 
 
