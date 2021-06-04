@@ -143,15 +143,15 @@ def get_tf_model(input_layer, feature_maps, input_size_wh, output_sizes_wh,
 
 def save_tf(get_model_func, weights_file, save_output_dir, 
             layer_size, output_pos,
-            input_size_wh, output_sizes_wh,
+            input_size_hw, output_sizes_hw,
             num_class, anchors, num_anchor, strides, xyscale,
             score_thresh):
 
-    input_layer = tf.keras.layers.Input([*input_size_wh, 3])
+    input_layer = tf.keras.layers.Input([*input_size_hw, 3])
     feature_maps = get_model_func(input_layer)
 
     model = get_tf_model(
-        input_layer, feature_maps, input_size_wh, output_sizes_wh, 
+        input_layer, feature_maps, input_size_hw, output_sizes_hw, 
         num_class, anchors, num_anchor, strides, xyscale,
         score_thresh)
 
