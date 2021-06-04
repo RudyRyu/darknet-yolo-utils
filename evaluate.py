@@ -15,6 +15,10 @@ def _evaluate_worker(image_path, cfg, weights, output_names, input_size_wh,
                      score_thresh, iou_thresh, labels, save_size_wh, 
                      save_dir_path):
 
+    """
+    Need to add False Positive
+    """
+
     image_path = image_path.strip()
     image = cv2.imread(image_path)
     net = cv2.dnn.readNetFromDarknet(cfg, weights)

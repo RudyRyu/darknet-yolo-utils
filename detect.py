@@ -251,8 +251,8 @@ def detect_video_with_roi(cfg, weights, video_path, video_size_wh, roi_size_wh,
             cv2.waitKey()
 
         else:
-            # cv2.waitKey(1)
-            cv2.waitKey()
+            cv2.waitKey(1)
+            # cv2.waitKey()
             
 
 def detect_video(cfg, weights, label_path, video_path, video_size_wh, 
@@ -413,41 +413,40 @@ def detect_image(cfg, weights, image_path, image_size_wh, label_path,
 
 if __name__ == '__main__':
 
-    # detect_image(
-    #     cfg='cfg/digit/sh_digit.cfg',
-    #     weights='cfg/digit/sh_digit_6000.weights',
-    #     image_path='sample/test_images/test_image31.png',
-    #     image_size_wh=(128,64),
-    #     label_path='cfg/digit/digit.names',
-    #     score_thresh=0.4,
-    #     show_size_wh=(192, 96),
-    #     output_image_path='',
-    #     use_cuda=True
-    # )
-
-    detect_video(
-        cfg='cfg/vehicle/yolov4-vl-vs.cfg', 
-        weights='cfg/vehicle/yolov4-vl-vs_best.weights',
-        label_path='cfg/vehicle/vehicle.names',
-        video_path='/Users/rudy/Desktop/Development/sample/sample/vehicle/vehicle_sample1.mp4', 
-        video_size_wh=(512,384), 
-        output_video_path='',
-        show_size_wh=(1920, 1080),
-        score_thresh=0.5,
-        use_cuda=False
+    detect_image(
+        cfg='cfg/digit/sh_digit.cfg',
+        weights='cfg/digit/sh_digit_best.weights',
+        image_path='sample/test_images/test_image38.png',
+        image_size_wh=(128,64),
+        label_path='cfg/digit/digit.names',
+        score_thresh=0.4,
+        show_size_wh=(192, 96),
+        output_image_path='',
+        use_cuda=True
     )
 
+    # detect_video(
+    #     cfg='cfg/vehicle/yolov4-vl-vs.cfg', 
+    #     weights='cfg/vehicle/yolov4-vl-vs_best.weights',
+    #     label_path='cfg/vehicle/vehicle.names',
+    #     video_path='/Users/rudy/Desktop/Development/sample/sample/vehicle/vehicle_sample1.mp4', 
+    #     video_size_wh=(512,384), 
+    #     output_video_path='',
+    #     show_size_wh=(1920, 1080),
+    #     score_thresh=0.5,
+    #     use_cuda=False
+    # )
 
     # detect_video_with_roi(
-    #     cfg='cfg/digit/sh_digit.cfg',
-    #     weights='cfg/digit/sh_digit_92000.weights',
+    #     cfg='cfg/digit/yolov3-tiny-digit-x2-shallower-1out.cfg',
+    #     weights='cfg/digit/yolov3-tiny-digit-x2-shallower-1out_40000.weights',
     #     label_path='cfg/digit/digit.names',
     #     video_path='/Users/rudy/Desktop/output-cut.mp4',
     #     video_size_wh=(1920, 1080),
     #     roi_size_wh=(128,64),
     #     score_thresh=0.5,
-    #     mode='batch_inference',
-    #     use_cuda=True
+    #     mode='single_inference',
+    #     use_cuda=False
     # )
 
 
