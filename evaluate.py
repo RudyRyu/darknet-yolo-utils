@@ -105,7 +105,8 @@ def _evaluate_worker(image_path, cfg, weights, output_names, input_size_wh,
 
 
 def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh, 
-             score_thresh, iou_thresh, save_size_wh, save_dir_path):
+             score_thresh, iou_thresh, save_size_wh, save_dir_path,
+             process_num=mp.cpu_count()):
 
     """
     1. image / label_dict batch list 구성
@@ -140,7 +141,7 @@ def evaluate(cfg, weights, label_path, image_paths_txt, input_size_wh,
         score_thresh=score_thresh, iou_thresh=iou_thresh, 
         save_size_wh=save_size_wh, save_dir_path=save_dir_path)
 
-    pool = mp.Pool(processes=mp.cpu_count())
+    pool = mp.Pool(processes=process_num)
     result = pool.map(_partial_map, image_paths)
 
     total_num = len(result)
@@ -162,4 +163,5 @@ if __name__ == '__main__':
         iou_thresh=0.3,
         save_size_wh=(256, 128),
         save_dir_path='result/'
+        process_num=mp.cpu_count()
     )
