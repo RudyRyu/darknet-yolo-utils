@@ -20,7 +20,7 @@ def _evaluate_worker(image_path, cfg, weights, output_names, input_size_wh,
     net = cv2.dnn.readNetFromDarknet(cfg, weights)
 
     idxs, boxes, scores, class_ids = \
-        infer.infer_image(net, image, output_names, input_size_wh, score_thresh)
+        infer.infer_image(image, net, output_names, input_size_wh, score_thresh)
 
     label_filename = os.path.splitext(image_path)[0] + '.txt'
 
