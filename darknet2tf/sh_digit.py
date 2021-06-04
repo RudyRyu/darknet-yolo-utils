@@ -11,7 +11,7 @@ import common
 
 STRIDES = np.array([16])
 NUM_ANCHOR = 6
-ANCHORS = np.array([7,7, 13,31, 21,45, 25,32, 28,48, 38,43]).reshape(1,6,2)
+ANCHORS = np.array([6,9, 12,42, 20,47, 25,47, 27,54, 36,52]).reshape(1,6,2)
 NUM_CLASS = 16
 XYSCALE = [1]
 INPUT_SIZE_HW = (64, 128)
