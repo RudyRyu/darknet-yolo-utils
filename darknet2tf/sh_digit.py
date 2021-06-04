@@ -41,7 +41,7 @@ def get_model_outputs(input_data):
     x = common.convolutional(x, (1, 1, 128*f, 64*f))
     x = common.convolutional(x, (3, 3, 64*f, 128*f))
 
-    x = tf.concat([x, route1], axis=-1)
+    x = tf.concat([route1, x], axis=-1)
     x = common.convolutional(x, (3, 3, 384*f, 128*f))
     
     out1 = common.convolutional(
