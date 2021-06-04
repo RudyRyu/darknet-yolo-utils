@@ -1,1 +1,0 @@
-p3 kmeans_yolo_org.py --annotation_file digit_data/train.txt --cluster_number 6 --anchors_file digit_anchors.txt --model_image_size 64x160
