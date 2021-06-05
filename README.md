@@ -1,6 +1,6 @@
 # Python utils for Darknet YOLO
 
-- Infer (OpenCV DNN module)
+- Infer (with OpenCV DNN module)
 - Detect (detect image, detect video, detect video with ROI)
   - single inference
   - single inference with multiprocessing
