@@ -5,7 +5,7 @@ from pprint import pprint
 import cv2
 
 
-def convert_vott_to_voc(vott_json, output):
+def convert_vott_to_txt(vott_json, output_txt):
 
     f_out = open(output, 'w+')
 
@@ -72,10 +72,10 @@ def show_rect(vott_json, img_dir):
         cv2.waitKey()
 
 if __name__ == '__main__':
-    convert_vott_to_voc(
-        vott_json='/Users/rav/Desktop/plate_train/dataset/ETRI/target/vott-json-export/license_plate_etri-export.json',
-        output='/Users/rav/Desktop/etri_voc_output.txt')
+    # convert_vott_to_txt(
+    #     vott_json='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/vott-json-export/license-plate-export.json',
+    #     output_txt='/Users/rudy/Desktop/voc_test_output.txt')
 
-    # show_rect(
-    #     vott_json='/Users/rav/Desktop/plate_train/dataset/ETRI/target/vott-json-export/license_plate_etri-export.json',
-    #     img_dir='/Users/rav/Desktop/plate_train/dataset/ETRI')
+    show_rect(
+        vott_json='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/vott-json-export/license-plate-export.json',
+        img_dir='/Users/rudy/Desktop/Development/Virtualenv/darknet-yolo-utils/vott-json-export')
