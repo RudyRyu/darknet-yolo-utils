@@ -1,13 +1,13 @@
 # Python utils for Darknet YOLO
 
-- Infer (OpenCV DNN module)
+- Infer (with OpenCV DNN module)
 - Detect (detect image, detect video, detect video with ROI)
   - single inference
   - single inference with multiprocessing
   - batch inference
 - Evaluate
   - show which images raise detection error (cannot know with Darknet)
-- Get Anchors Boxeswith Kmeans clustering 
+- Get Anchor Boxes with Kmeans clustering 
   - input with Darknet data format
   - reference: https://github.com/david8862/keras-YOLOv3-model-set
 - Generate Training Images
